@@ -13,6 +13,8 @@ from views import (
     show_trade_history,
     show_performance_view,
     show_log_view,
+    show_portfolio_table,
+    show_sim_summary,
 )
 from utils import (
     load_control_flags,
@@ -24,7 +26,9 @@ from utils import (
     get_log_lines,
     get_sentiment_data,
     mock_trade_history,
+    PortfolioManager,
 )
+from config.config_manager import ConfigManager
 
 
 # Placeholder chart data for markets
@@ -59,12 +63,18 @@ def main():
 
     st.divider()
 
+    config = ConfigManager().load_config()
+    pm = PortfolioManager(config)
+
     last_trade = get_last_trade()
     trade_history = get_trade_history()
     metrics = get_performance_metrics()
     equity = get_equity()
     sentiment = get_sentiment_data()
     logs = get_log_lines()
+
+    live_holdings = pm.get_live_holdings()
+    sim_data = pm.get_simulated_portfolio() if config.get("simulation_mode", True) else None
 
     if not trade_history:
         trade_history = mock_trade_history()
@@ -79,6 +89,18 @@ def main():
 
     top[1].metric("Portfolio Equity", equity)
     top[2].metric("Open Risk", metrics.get("open_risk", 0.0))
+
+    portfolio_tabs = st.tabs(["🟢 Live Portfolio", "🧪 Simulated Portfolio"])
+
+    with portfolio_tabs[0]:
+        show_portfolio_table(live_holdings, "Live Account Holdings")
+
+    with portfolio_tabs[1]:
+        if sim_data:
+            show_portfolio_table(sim_data.get("positions", []), "Simulated Holdings")
+            show_sim_summary(sim_data.get("summary", {}), sim_data.get("balance", 0.0))
+        else:
+            st.info("Simulation mode disabled or no data available.")
 
     st.divider()
 
