@@ -46,7 +46,9 @@ class ForexScalpingStrategy:
         await self.api.place_order(
             instrument=symbol,
             units=qty if side == "buy" else -qty,
-            order_type="MARKET"
+            order_type="MARKET",
+            price=price,
+            confidence=0.0,
         )
 
         self.db.log_trade(

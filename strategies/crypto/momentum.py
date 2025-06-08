@@ -73,6 +73,8 @@ class MomentumStrategy:
             side=signal.action,
             size=qty,
             order_type="market",
+            price=price,
+            confidence=signal.confidence,
         )
 
         self.db.log_trade(

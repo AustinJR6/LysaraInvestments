@@ -11,6 +11,7 @@ from strategies.crypto.momentum import MomentumStrategy
 from data.market_data_crypto import start_crypto_market_feed
 from db.db_manager import DatabaseManager
 from services.background_tasks import BackgroundTasks
+from services.sim_portfolio import SimulatedPortfolio
 
 
 class BotLauncher:
@@ -18,6 +19,11 @@ class BotLauncher:
         self.config = config
         self.db = DatabaseManager(config.get("db_path", "trades.db"))
         self.bg_tasks = BackgroundTasks(config)
+        self.sim_portfolio = None
+        if self.config.get("simulation_mode", True):
+            starting = self.config.get("starting_balance", 1000.0)
+            state_file = self.config.get("sim_state_file", "data/sim_state.json")
+            self.sim_portfolio = SimulatedPortfolio(starting_balance=starting, state_file=state_file)
 
     def start_all_bots(self):
         asyncio.create_task(self.bg_tasks.run_sentiment_loop())
@@ -41,7 +47,8 @@ class BotLauncher:
         crypto_api = CryptoAPI(
             api_key=api_keys["coinbase"],
             secret_key=api_keys["coinbase_secret"],
-            simulation_mode=self.config.get("simulation_mode", True)
+            simulation_mode=self.config.get("simulation_mode", True),
+            portfolio=self.sim_portfolio,
         )
 
         await crypto_api.fetch_account_info()

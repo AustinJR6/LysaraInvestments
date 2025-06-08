@@ -48,7 +48,8 @@ class MeanReversionStrategy:
             side=side,
             size=qty,
             price=price,
-            order_type="market"
+            order_type="market",
+            confidence=0.0,
         )
 
         self.db.log_trade(
