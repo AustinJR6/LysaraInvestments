@@ -54,7 +54,8 @@ class BotLauncher:
             risk=risk,
             config=settings,
             db=self.db,
-            symbol_list=symbols
+            symbol_list=symbols,
+            sentiment_source=self.bg_tasks,
         )
 
         asyncio.create_task(start_crypto_market_feed(symbols))

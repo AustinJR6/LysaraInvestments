@@ -82,3 +82,26 @@ async def fetch_newsapi_sentiment(api_key: str, query: str = "Bitcoin") -> dict:
         "count": len(scores),
         "timestamp": datetime.utcnow().isoformat()
     }
+
+# === Reddit ===
+
+async def fetch_reddit_sentiment(subreddit: str, limit: int = 50) -> dict:
+    """Gather sentiment score from a subreddit."""
+    url = f"https://www.reddit.com/r/{subreddit}/hot.json?limit={limit}"
+    headers = {"User-Agent": "LysaraBot/0.1"}
+    scores = []
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers) as response:
+                data = await response.json()
+                posts = data.get("data", {}).get("children", [])
+                for post in posts:
+                    text = post.get("data", {}).get("title", "") + " " + post.get("data", {}).get("selftext", "")
+                    scores.append(analyze_sentiment(text))
+    except Exception as e:
+        logging.error(f"Reddit sentiment error: {e}")
+    return {
+        "score": round(sum(scores) / len(scores), 3) if scores else 0.0,
+        "count": len(scores),
+        "timestamp": datetime.utcnow().isoformat(),
+    }
