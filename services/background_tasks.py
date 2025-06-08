@@ -4,6 +4,7 @@ import asyncio
 import logging
 import json
 from pathlib import Path
+
 from data.sentiment import (
     fetch_cryptopanic_sentiment,
     fetch_newsapi_sentiment,
@@ -54,7 +55,6 @@ class BackgroundTasks:
                 logging.info(f"Reddit Sentiment: {reddit_scores}")
 
             self._persist_scores()
-
             await asyncio.sleep(interval)
 
     async def run_dummy_task(self, label: str = "heartbeat", interval: int = 10):
@@ -66,4 +66,6 @@ class BackgroundTasks:
             await asyncio.sleep(interval)
 
     def stop(self):
+        self._running = False
+
         self._running = False
