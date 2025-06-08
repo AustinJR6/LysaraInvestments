@@ -2,6 +2,9 @@
 
 import asyncio
 import logging
+import json
+from pathlib import Path
+
 from data.sentiment import (
     fetch_cryptopanic_sentiment,
     fetch_newsapi_sentiment,
@@ -17,6 +20,15 @@ class BackgroundTasks:
         self.subreddits = config.get("reddit_subreddits", ["Cryptocurrency"])
         self.sentiment_scores: dict = {}
         self._running = True
+
+        self.sentiment_file = Path("dashboard/data/sentiment_cache.json")
+
+    def _persist_scores(self):
+        try:
+            self.sentiment_file.parent.mkdir(parents=True, exist_ok=True)
+            self.sentiment_file.write_text(json.dumps(self.sentiment_scores, indent=2))
+        except Exception as e:
+            logging.error(f"Failed to persist sentiment scores: {e}")
 
     async def run_sentiment_loop(self, interval: int = 60):
         """
@@ -42,6 +54,7 @@ class BackgroundTasks:
                 self.sentiment_scores["reddit"] = reddit_scores
                 logging.info(f"Reddit Sentiment: {reddit_scores}")
 
+            self._persist_scores()
             await asyncio.sleep(interval)
 
     async def run_dummy_task(self, label: str = "heartbeat", interval: int = 10):
@@ -53,4 +66,6 @@ class BackgroundTasks:
             await asyncio.sleep(interval)
 
     def stop(self):
+        self._running = False
+
         self._running = False

@@ -15,3 +15,14 @@ def load_control_flags():
         except json.JSONDecodeError:
             return {}
     return {}
+
+import time
+import streamlit as st
+
+def auto_refresh(interval: int = 5):
+    """Simple auto-refresh using session state."""
+    if "_last_refresh" not in st.session_state:
+        st.session_state["_last_refresh"] = time.time()
+    elif time.time() - st.session_state["_last_refresh"] > interval:
+        st.session_state["_last_refresh"] = time.time()
+        st.experimental_rerun()
