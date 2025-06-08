@@ -20,12 +20,14 @@ class CryptoAPI(BaseAPI):
         passphrase: str = None,
         base_url: str = "https://api.pro.coinbase.com",
         simulation_mode: bool = True,
+        portfolio=None,
     ):
         super().__init__(base_url)
         self.api_key = api_key
         self.secret_key = secret_key or ""
         self.passphrase = passphrase or ""
         self.simulation_mode = simulation_mode
+        self.portfolio = portfolio
         self._mock_equity = 10000.0
         self._mock_holdings = {}
 
@@ -108,7 +110,14 @@ class CryptoAPI(BaseAPI):
         """
         if self.simulation_mode:
             logging.info(f"CryptoAPI: sim {order_type} order {side} {size} {product_id}")
-            return {"id": "sim_order", "status": "done", "filled_size": size}
+            trade_price = price
+            if trade_price is None:
+                data = await self.fetch_market_price(product_id)
+                trade_price = float(data.get("price", 0))
+            if self.portfolio:
+                conf = kwargs.get("confidence", 0.0)
+                self.portfolio.execute_trade(product_id, side, size, trade_price, conf)
+            return {"id": "sim_order", "status": "done", "filled_size": size, "price": trade_price}
 
         order = {
             "product_id": product_id,

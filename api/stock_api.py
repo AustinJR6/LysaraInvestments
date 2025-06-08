@@ -19,11 +19,13 @@ class StockAPI(BaseAPI):
         api_secret: str = None,
         base_url: str = "https://api.robinhood.com",
         simulation_mode: bool = True,
+        portfolio=None,
     ):
         super().__init__(base_url)
         self.api_key = api_key
         self.api_secret = api_secret
         self.simulation_mode = simulation_mode
+        self.portfolio = portfolio
         # For Robinhood, token auth might go here
         if not simulation_mode:
             # Example header for real-world usage
@@ -75,13 +77,21 @@ class StockAPI(BaseAPI):
         quantity: float,
         price: float = None,
         order_type: str = "market",
+        **kwargs,
     ) -> dict:
         """
         Place market or limit order; returns order details or mock.
         """
         if self.simulation_mode:
             logging.info(f"StockAPI: sim {order_type} order {side} {quantity} {symbol}")
-            return {"id": "sim_order", "status": "filled", "symbol": symbol, "side": side, "quantity": quantity}
+            trade_price = price
+            if trade_price is None:
+                data = await self.fetch_market_price(symbol)
+                trade_price = float(data.get("price") or data.get("last_trade_price", 0))
+            if self.portfolio:
+                conf = kwargs.get("confidence", 0.0)
+                self.portfolio.execute_trade(symbol, side, quantity, trade_price, conf)
+            return {"id": "sim_order", "status": "filled", "symbol": symbol, "side": side, "quantity": quantity, "price": trade_price}
 
         path = "/orders/"
         body = {

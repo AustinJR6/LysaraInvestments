@@ -45,7 +45,9 @@ class StockMomentumStrategy:
             symbol=symbol,
             side=side,
             quantity=qty,
-            order_type="market"
+            order_type="market",
+            price=price,
+            confidence=0.0,
         )
 
         self.db.log_trade(
