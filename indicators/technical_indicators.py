@@ -3,6 +3,9 @@
 import pandas as pd
 
 def moving_average(prices: list[float], period: int) -> float:
+    """Simple moving average with basic safety checks."""
+    if not prices:
+        return 0.0
     if len(prices) < period:
         return sum(prices) / len(prices)
     return sum(prices[-period:]) / period
