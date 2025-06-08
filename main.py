@@ -20,6 +20,9 @@ async def main():
     )
 
     logging.info("Lysara Investments booting up...")
+    logging.info(
+        f"Simulation mode: {config.get('simulation_mode', True)} | Risk per trade: {config.get('crypto_settings', {}).get('risk_per_trade')}"
+    )
 
     launcher = BotLauncher(config)
     launcher.start_all_bots()
