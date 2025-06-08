@@ -8,6 +8,7 @@ from .data_access import (
     get_sentiment_data,
     mock_trade_history,
 )
+from .portfolio_manager import PortfolioManager
 __all__ = [
     "load_control_flags",
     "auto_refresh",
@@ -18,4 +19,5 @@ __all__ = [
     "get_log_lines",
     "get_sentiment_data",
     "mock_trade_history",
+    "PortfolioManager",
 ]
