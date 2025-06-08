@@ -1,0 +1,7 @@
+aiohttp
+pandas
+numpy
+streamlit
+textblob
+websockets
+python-dotenv

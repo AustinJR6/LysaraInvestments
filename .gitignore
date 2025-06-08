@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.db
+
+# Virtual Envs
+.env
+.venv/
+venv/
+
+# Logs
+logs/
+*.log
+
+# System
+.DS_Store
+*.swp
+
+# App Specific
+control_flags.json
+config.json
