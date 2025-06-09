@@ -24,3 +24,8 @@ key is picked up even when modules are imported before the configuration stage.
 
 Additional market data feeds are available including real-time bars from Alpaca
 and price polling from CoinGecko.
+
+To let the bot automatically suggest a few trending symbols each day, set
+`ENABLE_AI_ASSET_DISCOVERY=true` in your `.env`.  Provide a comma separated list
+of your preferred `TRADE_SYMBOLS` which will remain intact while any AI picked
+symbols are added on top.

@@ -96,3 +96,79 @@ def get_last_decision(log_path: str = "logs/ai_decisions.log") -> dict:
     except Exception as e:
         logging.error(f"Failed to read last AI decision: {e}")
         return {}
+
+
+async def _fetch_news_headlines(api_key: str, limit: int = 20) -> list[str]:
+    """Return a list of recent business/crypto news headlines."""
+    import aiohttp
+
+    url = "https://newsapi.org/v2/top-headlines"
+    params = {
+        "category": "business",
+        "language": "en",
+        "pageSize": limit,
+        "apiKey": api_key,
+    }
+    headlines: list[str] = []
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params) as resp:
+                data = await resp.json()
+                for art in data.get("articles", []):
+                    title = art.get("title")
+                    if title:
+                        headlines.append(title)
+    except Exception as e:
+        logging.error(f"NewsAPI fetch failed: {e}")
+    return headlines
+
+
+async def ai_discover_assets(base_symbols: list[str] | None = None) -> list[str]:
+    """Return 2-3 trending symbols not already in base_symbols."""
+    enabled = os.getenv("ENABLE_AI_ASSET_DISCOVERY", "false").lower() in (
+        "true",
+        "1",
+        "yes",
+    )
+    if not enabled:
+        return []
+
+    if not openai.api_key:
+        logging.error("OPENAI_API_KEY not set for asset discovery")
+        return []
+
+    base_symbols = base_symbols or []
+    news_key = os.getenv("NEWSAPI_KEY")
+    headlines: list[str] = []
+    if news_key:
+        headlines = await _fetch_news_headlines(news_key, limit=20)
+
+    user_msg = (
+        "Existing symbols: "
+        + ",".join(base_symbols)
+        + "\nRecent headlines:\n"
+        + "\n".join(headlines[:20])
+        + "\nSuggest up to 3 additional liquid trading symbols not already in the list."
+        " Return JSON: { symbols: [symbol,...], reason }"
+    )
+
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a market analyst recommending assets.",
+        },
+        {"role": "user", "content": user_msg},
+    ]
+
+    try:
+        text = await _call_openai(messages)
+        data = json.loads(text)
+        symbols = [s.strip().upper() for s in data.get("symbols", [])]
+        reason = data.get("reason", "")
+        symbols = [s for s in symbols if s and s not in base_symbols]
+        if symbols:
+            logging.info(f"[AI_DISCOVERED] {symbols} reason={reason}")
+        return symbols
+    except Exception as e:
+        logging.error(f"AI asset discovery failed: {e}")
+        return []

@@ -43,7 +43,21 @@ class BotLauncher:
 
         api_keys = self.config["api_keys"]
         settings = self.config.get("crypto_settings", {})
-        symbols = settings.get("trade_symbols", ["BTC-USD", "ETH-USD"])
+        base_symbols_env = os.getenv("TRADE_SYMBOLS")
+        symbols = (
+            base_symbols_env.split(",") if base_symbols_env else settings.get("trade_symbols", ["BTC-USD", "ETH-USD"])
+        )
+
+        extra_symbols = []
+        if self.config.get("ENABLE_AI_ASSET_DISCOVERY", False):
+            from services.ai_strategist import ai_discover_assets
+
+            try:
+                extra_symbols = await ai_discover_assets(symbols)
+            except Exception as e:
+                logging.error(f"AI asset discovery failed: {e}")
+
+        symbols = list(set(symbols + extra_symbols))
 
         crypto_api = CryptoAPI(
             api_key=api_keys["coinbase"],
@@ -65,6 +79,7 @@ class BotLauncher:
             db=self.db,
             symbol_list=symbols,
             sentiment_source=self.bg_tasks,
+            ai_symbols=extra_symbols,
         )
 
         asyncio.create_task(start_crypto_market_feed(symbols))
