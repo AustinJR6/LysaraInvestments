@@ -39,7 +39,12 @@ async def fetch_cryptopanic_sentiment(api_key: str, symbols: list[str]) -> dict:
                 async with session.get(url, params=params, headers=headers) as response:
                     data = await response.json()
                     posts = data.get("results", [])
-                    scores = [analyze_sentiment(p["title"] + " " + p.get("body", "")) for p in posts]
+                    scores = [
+                        analyze_sentiment(
+                            (p.get("title") or "") + " " + (p.get("body") or "")
+                        )
+                        for p in posts
+                    ]
                     avg_score = round(sum(scores) / len(scores), 3) if scores else 0.0
                     result[symbol] = {
                         "score": avg_score,
@@ -72,7 +77,9 @@ async def fetch_newsapi_sentiment(api_key: str, query: str = "Bitcoin") -> dict:
                 data = await response.json()
                 articles = data.get("articles", [])
                 for article in articles:
-                    content = article.get("title", "") + " " + article.get("description", "")
+                    title = article.get("title") or ""
+                    desc = article.get("description") or ""
+                    content = title + " " + desc
                     scores.append(analyze_sentiment(content))
     except Exception as e:
         logging.error(f"NewsAPI error: {e}")

@@ -19,7 +19,7 @@ class CryptoAPI(BaseAPI):
         api_key: str,
         secret_key: str = None,
         passphrase: str = None,
-        base_url: str = "https://api.pro.coinbase.com",
+        base_url: str = "https://api.exchange.coinbase.com",
         simulation_mode: bool = True,
         portfolio=None,
         config: dict | None = None,
