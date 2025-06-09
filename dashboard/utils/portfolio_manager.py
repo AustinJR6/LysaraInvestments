@@ -99,6 +99,101 @@ class PortfolioManager:
 
         return holdings
 
+    async def _fetch_crypto_holdings(self) -> List[Dict]:
+        """Fetch crypto holdings via Coinbase."""
+        holdings: List[Dict] = []
+        api_keys = self.config.get("api_keys", {})
+        if not api_keys.get("coinbase"):
+            return holdings
+        try:
+            api = CryptoAPI(
+                api_key=api_keys.get("coinbase"),
+                secret_key=api_keys.get("coinbase_secret", ""),
+                simulation_mode=False,
+            )
+            data = await api.fetch_holdings()
+            for asset, qty in data.items():
+                price = await api.fetch_market_price(f"{asset}-USD")
+                curr = float(price.get("price", 0))
+                holdings.append(
+                    {
+                        "asset": asset,
+                        "quantity": qty,
+                        "entry_price": None,
+                        "current_price": curr,
+                        "pnl": None,
+                    }
+                )
+            await api.close()
+        except Exception as e:
+            logging.error(f"Failed to fetch crypto holdings: {e}")
+        return holdings
+
+    async def _fetch_stock_holdings(self) -> List[Dict]:
+        """Fetch stock holdings via Robinhood or other API."""
+        holdings: List[Dict] = []
+        api_keys = self.config.get("api_keys", {})
+        if not api_keys.get("robinhood"):
+            return holdings
+        try:
+            api = StockAPI(
+                api_key=api_keys.get("robinhood"),
+                api_secret=api_keys.get("robinhood_secret", ""),
+                simulation_mode=False,
+            )
+            data = await api.fetch_holdings()
+            for asset, qty in data.items():
+                price = await api.fetch_market_price(asset)
+                curr = float(price.get("last_trade_price", price.get("price", 0)))
+                holdings.append(
+                    {
+                        "asset": asset,
+                        "quantity": qty,
+                        "entry_price": None,
+                        "current_price": curr,
+                        "pnl": None,
+                    }
+                )
+            await api.close()
+        except Exception as e:
+            logging.error(f"Failed to fetch stock holdings: {e}")
+        return holdings
+
+    async def _fetch_forex_holdings(self) -> List[Dict]:
+        """Fetch forex account balance via OANDA."""
+        holdings: List[Dict] = []
+        api_keys = self.config.get("api_keys", {})
+        if not (api_keys.get("oanda") and api_keys.get("oanda_account")):
+            return holdings
+        try:
+            api = ForexAPI(
+                api_key=api_keys.get("oanda"),
+                account_id=api_keys.get("oanda_account"),
+                simulation_mode=False,
+            )
+            info = await api.get_account_info()
+            balance = float(info.get("balance", 0))
+            holdings.append(
+                {
+                    "asset": "Forex Account",
+                    "quantity": balance,
+                    "entry_price": None,
+                    "current_price": balance,
+                    "pnl": None,
+                }
+            )
+            await api.close()
+        except Exception as e:
+            logging.error(f"Failed to fetch forex holdings: {e}")
+        return holdings
+
+    async def _fetch_all_holdings(self) -> Dict[str, List[Dict]]:
+        """Fetch holdings for all asset classes separately."""
+        crypto = await self._fetch_crypto_holdings()
+        stocks = await self._fetch_stock_holdings()
+        forex = await self._fetch_forex_holdings()
+        return {"crypto": crypto, "stocks": stocks, "forex": forex}
+
     def get_live_holdings(self) -> List[Dict]:
         try:
             return asyncio.run(self._fetch_live_holdings())
@@ -106,6 +201,17 @@ class PortfolioManager:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             result = loop.run_until_complete(self._fetch_live_holdings())
+            loop.close()
+            return result
+
+    def get_account_holdings(self) -> Dict[str, List[Dict]]:
+        """Return real holdings for crypto, stocks and forex separately."""
+        try:
+            return asyncio.run(self._fetch_all_holdings())
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(self._fetch_all_holdings())
             loop.close()
             return result
 

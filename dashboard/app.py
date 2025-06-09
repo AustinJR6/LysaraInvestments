@@ -48,7 +48,7 @@ def mock_chart_data(label: str):
 def main():
     st.set_page_config(page_title="Lysara Dashboard", layout="wide")
 
-    auto_refresh(5)
+    auto_refresh(10)
 
     st.title("🌐 Lysara Investments Dashboard")
 
@@ -73,7 +73,7 @@ def main():
     sentiment = get_sentiment_data()
     logs = get_log_lines()
 
-    live_holdings = pm.get_live_holdings()
+    real_holdings = pm.get_account_holdings()
     sim_data = pm.get_simulated_portfolio() if config.get("simulation_mode", True) else None
 
     if not trade_history:
@@ -90,17 +90,40 @@ def main():
     top[1].metric("Portfolio Equity", equity)
     top[2].metric("Open Risk", metrics.get("open_risk", 0.0))
 
-    portfolio_tabs = st.tabs(["🟢 Live Portfolio", "🧪 Simulated Portfolio"])
+    holdings_tabs = st.tabs([
+        "💰 Simulated Holdings",
+        "📊 Real Crypto",
+        "📈 Real Stocks",
+        "🌍 Real Forex",
+    ])
 
-    with portfolio_tabs[0]:
-        show_portfolio_table(live_holdings, "Live Account Holdings")
-
-    with portfolio_tabs[1]:
+    with holdings_tabs[0]:
         if sim_data:
             show_portfolio_table(sim_data.get("positions", []), "Simulated Holdings")
             show_sim_summary(sim_data.get("summary", {}), sim_data.get("balance", 0.0))
         else:
             st.info("Simulation mode disabled or no data available.")
+
+    with holdings_tabs[1]:
+        crypto_positions = real_holdings.get("crypto", [])
+        if crypto_positions:
+            show_portfolio_table(crypto_positions, "Crypto Account Holdings")
+        else:
+            st.info("No real holdings available.")
+
+    with holdings_tabs[2]:
+        stock_positions = real_holdings.get("stocks", [])
+        if stock_positions:
+            show_portfolio_table(stock_positions, "Stock Account Holdings")
+        else:
+            st.info("No real holdings available.")
+
+    with holdings_tabs[3]:
+        forex_positions = real_holdings.get("forex", [])
+        if forex_positions:
+            show_portfolio_table(forex_positions, "Forex Account Holdings")
+        else:
+            st.info("No real holdings available.")
 
     st.divider()
 
