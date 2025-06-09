@@ -31,6 +31,7 @@ from utils import (
     PortfolioManager,
 )
 from config.config_manager import ConfigManager
+from services.ai_strategist import get_last_decision
 
 
 # Placeholder chart data for markets
@@ -116,6 +117,19 @@ def main():
 
     top[1].metric("Portfolio Equity", equity)
     top[2].metric("Open Risk", metrics.get("open_risk", 0.0))
+
+    decision = get_last_decision()
+    if decision:
+        conf = decision["decision"].get("confidence", 0.0)
+        color = "green" if conf >= 0.7 else "yellow" if conf >= 0.4 else "red"
+        st.markdown("### AI Strategist Last Decision")
+        st.markdown(
+            f"<span style='background-color:{color};color:white;padding:4px;border-radius:3px'>{decision['decision'].get('action')} ({conf:.2f})</span> - {decision['decision'].get('reason','')}",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown("### AI Strategist Last Decision")
+        st.write("No decision logged yet.")
 
     portfolio_tabs = st.tabs([
         "Simulated Portfolio",

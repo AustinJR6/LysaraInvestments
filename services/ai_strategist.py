@@ -68,3 +68,26 @@ async def get_ai_trade_decision(context: dict) -> dict:
             await asyncio.sleep(2)
 
     return {"action": "hold", "confidence": 0.5, "reason": "AI error"}
+
+
+def get_last_decision(log_path: str = "logs/ai_decisions.log") -> dict:
+    """Return the most recent AI decision and context from log file."""
+    path = Path(log_path)
+    if not path.is_file():
+        return {}
+    try:
+        lines = path.read_text().strip().splitlines()
+        if not lines:
+            return {}
+        last = lines[-1]
+        ts_part, rest = last.split(" ", 1)
+        ctx_str = rest.split("context=")[1].split(" decision=")[0]
+        dec_str = rest.split("decision=")[1]
+        return {
+            "timestamp": ts_part,
+            "context": json.loads(ctx_str),
+            "decision": json.loads(dec_str),
+        }
+    except Exception as e:
+        logging.error(f"Failed to read last AI decision: {e}")
+        return {}
