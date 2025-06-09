@@ -2,6 +2,7 @@ from .dashboard_helpers import load_control_flags, auto_refresh
 from .data_access import (
     get_trade_history,
     get_last_trade,
+    get_last_trade_per_market,
     get_equity,
     get_performance_metrics,
     get_log_lines,
@@ -14,6 +15,7 @@ __all__ = [
     "auto_refresh",
     "get_trade_history",
     "get_last_trade",
+    "get_last_trade_per_market",
     "get_equity",
     "get_performance_metrics",
     "get_log_lines",

@@ -82,7 +82,16 @@ class ForexAPI(BaseAPI):
                 trade_price = float(data.get("bid") or 0)
             except Exception:
                 trade_price = 0.0
-        await log_live_trade(instrument, "buy" if units > 0 else "sell", abs(units), trade_price, self.config)
+        await log_live_trade(
+            instrument,
+            "buy" if units > 0 else "sell",
+            abs(units),
+            trade_price,
+            self.config,
+            market="forex",
+            confidence=None,
+            risk_pct=self.config.get("forex_settings", {}).get("risk_per_trade") * 100 if self.config.get("forex_settings") else None,
+        )
         return result
 
     async def close(self):

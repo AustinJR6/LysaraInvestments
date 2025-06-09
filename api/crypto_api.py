@@ -151,7 +151,16 @@ class CryptoAPI(BaseAPI):
                 trade_price = float(data.get("price", 0))
             except Exception:
                 trade_price = 0.0
-        await log_live_trade(product_id, side, size, trade_price, self.config)
+        await log_live_trade(
+            product_id,
+            side,
+            size,
+            trade_price,
+            self.config,
+            market="crypto",
+            confidence=kwargs.get("confidence"),
+            risk_pct=self.config.get("crypto_settings", {}).get("risk_per_trade") * 100 if self.config.get("crypto_settings") else None,
+        )
         return result
 
     async def close(self):

@@ -3,6 +3,7 @@
 """Main entry for the Streamlit dashboard with real-time updates."""
 
 import streamlit as st
+import datetime
 
 from controls.trading_controls import show_trading_controls
 from controls.risk_controls import show_risk_controls
@@ -20,6 +21,7 @@ from utils import (
     load_control_flags,
     auto_refresh,
     get_last_trade,
+    get_last_trade_per_market,
     get_trade_history,
     get_performance_metrics,
     get_equity,
@@ -51,12 +53,24 @@ def main():
     auto_refresh(10)
 
     st.title("🌐 Lysara Investments Dashboard")
-    mode = "LIVE" if not ConfigManager().load_config().get("simulation_mode", True) else "SIM"
+
+    config = ConfigManager().load_config()
+    pm = PortfolioManager(config)
+
+    mode = "LIVE" if not config.get("simulation_mode", True) else "SIM"
     banner_color = "red" if mode == "LIVE" else "green"
-    st.markdown(f"<div style='background-color:{banner_color};padding:6px;text-align:center;color:white;'>Trading Mode: {mode}</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div style='background-color:{banner_color};padding:6px;text-align:center;color:white;'>Trading Mode: {mode}</div>",
+        unsafe_allow_html=True,
+    )
+
+    if mode == "SIM":
+        st.sidebar.success("✅ SIMULATION MODE ON")
+    else:
+        st.sidebar.error("❌ LIVE MODE ACTIVE")
 
     # Sidebar controls
-    show_trading_controls()
+    show_trading_controls(pm.sim_portfolio)
     show_risk_controls()
 
     flags = load_control_flags()
@@ -66,18 +80,28 @@ def main():
 
     st.divider()
 
-    config = ConfigManager().load_config()
-    pm = PortfolioManager(config)
 
-    last_trade = get_last_trade()
-    trade_history = get_trade_history()
-    metrics = get_performance_metrics()
-    equity = get_equity()
-    sentiment = get_sentiment_data()
-    logs = get_log_lines()
-
-    real_holdings = pm.get_account_holdings()
-    sim_data = pm.get_simulated_portfolio() if config.get("simulation_mode", True) else None
+    with st.spinner("Loading data..."):
+        try:
+            last_trade = get_last_trade()
+            trade_history = get_trade_history()
+            metrics = get_performance_metrics()
+            equity = get_equity()
+            sentiment = get_sentiment_data()
+            logs = get_log_lines()
+            real_holdings = pm.get_account_holdings()
+            sim_data = pm.get_simulated_portfolio() if config.get("simulation_mode", True) else None
+        except Exception as e:
+            st.error(f"Data load failed: {e}")
+            last_trade = None
+            trade_history = []
+            metrics = {}
+            equity = 0.0
+            sentiment = {}
+            logs = []
+            real_holdings = {"crypto": [], "stocks": [], "forex": []}
+            sim_data = None
+    last_updated = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
     if not trade_history:
         trade_history = mock_trade_history()
@@ -93,63 +117,71 @@ def main():
     top[1].metric("Portfolio Equity", equity)
     top[2].metric("Open Risk", metrics.get("open_risk", 0.0))
 
-    holdings_tabs = st.tabs([
-        "💰 Simulated Holdings",
-        "📊 Real Crypto",
-        "📈 Real Stocks",
-        "🌍 Real Forex",
+    portfolio_tabs = st.tabs([
+        "Simulated Portfolio",
+        "Real Holdings",
+        "Last Trades",
+        "Trade History Summary",
     ])
 
-    with holdings_tabs[0]:
+    with portfolio_tabs[0]:
         if sim_data:
             show_portfolio_table(sim_data.get("positions", []), "Simulated Holdings")
             show_sim_summary(sim_data.get("summary", {}), sim_data.get("balance", 0.0))
         else:
             st.info("Simulation mode disabled or no data available.")
+        st.caption(f"Last Updated: {last_updated} UTC")
 
-    with holdings_tabs[1]:
-        crypto_positions = real_holdings.get("crypto", [])
-        if crypto_positions:
-            show_portfolio_table(crypto_positions, "Crypto Account Holdings")
-        else:
-            st.info("No real holdings available.")
+    with portfolio_tabs[1]:
+        real_tabs = st.tabs(["Crypto", "Stocks", "Forex"])
+        with real_tabs[0]:
+            crypto_positions = real_holdings.get("crypto", [])
+            if crypto_positions:
+                show_portfolio_table(crypto_positions, "Crypto Account Holdings")
+            else:
+                st.info("No real holdings available.")
+        with real_tabs[1]:
+            stock_positions = real_holdings.get("stocks", [])
+            if stock_positions:
+                show_portfolio_table(stock_positions, "Stock Account Holdings")
+            else:
+                st.info("No real holdings available.")
+        with real_tabs[2]:
+            forex_positions = real_holdings.get("forex", [])
+            if forex_positions:
+                show_portfolio_table(forex_positions, "Forex Account Holdings")
+            else:
+                st.info("No real holdings available.")
+        st.caption(f"Last Updated: {last_updated} UTC")
 
-    with holdings_tabs[2]:
-        stock_positions = real_holdings.get("stocks", [])
-        if stock_positions:
-            show_portfolio_table(stock_positions, "Stock Account Holdings")
-        else:
-            st.info("No real holdings available.")
+    with portfolio_tabs[2]:
+        last_trades = get_last_trade_per_market()
+        for market_label in ["crypto", "stocks", "forex"]:
+            trade = last_trades.get(market_label)
+            st.subheader(market_label.capitalize())
+            if trade:
+                st.write(
+                    f"{trade['timestamp']} {trade['symbol']} {trade['side']} {trade['quantity']} @ {trade['price']} confidence={trade.get('reason','')}"
+                )
+            else:
+                st.write("No trades yet.")
+        st.caption(f"Last Updated: {last_updated} UTC")
 
-    with holdings_tabs[3]:
-        forex_positions = real_holdings.get("forex", [])
-        if forex_positions:
-            show_portfolio_table(forex_positions, "Forex Account Holdings")
-        else:
-            st.info("No real holdings available.")
+    with portfolio_tabs[3]:
+        show_trade_history(trade_history)
+        show_performance_view(metrics)
+        st.caption(f"Last Updated: {last_updated} UTC")
 
     st.divider()
 
-    market_tabs = st.tabs([
-        "📈 Crypto",
-        "📊 Stocks",
-        "💱 Forex",
-        "📜 Trades",
-        "📊 Performance",
-        "📝 Logs",
-    ])
-
-    with market_tabs[0]:
+    log_tabs = st.tabs(["Crypto Chart", "Stocks Chart", "Forex Chart", "Logs"])
+    with log_tabs[0]:
         show_crypto_view(mock_chart_data("crypto"))
-    with market_tabs[1]:
+    with log_tabs[1]:
         show_stocks_view(mock_chart_data("stocks"))
-    with market_tabs[2]:
+    with log_tabs[2]:
         show_forex_view(mock_chart_data("forex"))
-    with market_tabs[3]:
-        show_trade_history(trade_history)
-    with market_tabs[4]:
-        show_performance_view(metrics)
-    with market_tabs[5]:
+    with log_tabs[3]:
         show_log_view(logs)
 
     if sentiment:

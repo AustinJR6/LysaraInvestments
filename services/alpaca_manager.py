@@ -77,6 +77,15 @@ class AlpacaManager:
             limit_price=price if type == "limit" else None,
         )
         trade_price = price if price is not None else (await self.fetch_market_price(symbol)).get("price", 0)
-        await log_live_trade(symbol, side, qty, trade_price, self.config)
+        await log_live_trade(
+            symbol,
+            side,
+            qty,
+            trade_price,
+            self.config,
+            market="stock",
+            confidence=kwargs.get("confidence"),
+            risk_pct=self.config.get("stocks_settings", {}).get("risk_per_trade") * 100 if self.config.get("stocks_settings") else None,
+        )
         return order
 

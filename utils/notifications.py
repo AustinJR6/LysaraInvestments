@@ -22,3 +22,8 @@ async def send_slack_message(webhook_url: str, message: str):
                     logging.info("Slack message sent.")
     except Exception as e:
         logging.error(f"Slack error: {e}")
+
+
+async def send_email(smtp_config: dict, subject: str, body: str):
+    """Placeholder for sending email alerts via SMTP."""
+    logging.info("Email alerts not configured. Stub executed.")
