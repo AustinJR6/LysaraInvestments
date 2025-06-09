@@ -25,7 +25,7 @@ from views import (
     show_portfolio_table,
     show_sim_summary,
 )
-from utils import (
+from dashboard.utils import (
     load_control_flags,
     auto_refresh,
     get_last_trade,
