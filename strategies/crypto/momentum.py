@@ -10,13 +10,14 @@ from utils.helpers import parse_price
 from services.ai_strategist import get_ai_trade_decision
 
 class MomentumStrategy:
-    def __init__(self, api, risk, config, db, symbol_list, sentiment_source=None):
+    def __init__(self, api, risk, config, db, symbol_list, sentiment_source=None, ai_symbols=None):
         self.api = api
         self.risk = risk
         self.config = config
         self.db = db
         self.symbols = symbol_list
         self.sentiment_source = sentiment_source
+        self.ai_symbols = set(ai_symbols or [])
         self.price_history = {symbol: [] for symbol in symbol_list}
         self.interval = 10  # seconds
         self.dynamic_risk = DynamicRisk(risk,
@@ -114,6 +115,9 @@ class MomentumStrategy:
             logging.warning("Daily loss limit reached. Trade blocked.")
             return
         qty = self.dynamic_risk.position_size(price, confidence, self.price_history[symbol])
+        if symbol in self.ai_symbols:
+            qty *= 0.5
+            reason = f"AI_DISCOVERED | {reason}"
         if qty <= 0:
             logging.warning("Momentum: invalid position size.")
             return
