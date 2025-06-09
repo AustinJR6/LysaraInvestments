@@ -6,8 +6,17 @@ from datetime import datetime
 import asyncio
 from .notifications import send_slack_message
 
-async def log_live_trade(symbol: str, side: str, qty: float, price: float, config: dict):
-    """Append live trade details to log file and optional sqlite db."""
+async def log_live_trade(
+    symbol: str,
+    side: str,
+    qty: float,
+    price: float,
+    config: dict,
+    market: str = "crypto",
+    confidence: float | None = None,
+    risk_pct: float | None = None,
+):
+    """Append live trade details to log file and send Slack alert."""
     log_line = f"{datetime.utcnow().isoformat()} {symbol} {side} {qty} @ {price}"
     Path("logs").mkdir(exist_ok=True)
     with open("logs/trade_log.txt", "a") as f:
@@ -39,7 +48,16 @@ async def log_live_trade(symbol: str, side: str, qty: float, price: float, confi
 
     webhook = config.get("api_keys", {}).get("slack_webhook")
     if webhook:
-        await send_slack_message(webhook, log_line)
+        msg = (
+            "\ud83d\udea8 LIVE TRADE EXECUTED\n"
+            f"Market: {market.capitalize()}\n"
+            f"Action: {side.upper()} {qty} {symbol} @ ${price}"
+        )
+        if confidence is not None or risk_pct is not None:
+            conf = f"{confidence:.2f}" if confidence is not None else "N/A"
+            risk = f"{risk_pct}%" if risk_pct is not None else "N/A"
+            msg += f"\nConfidence: {conf} | Risk: {risk}"
+        await send_slack_message(webhook, msg)
 
 
 def confirm_live_mode(simulation_mode: bool):

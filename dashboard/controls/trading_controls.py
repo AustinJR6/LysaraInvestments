@@ -12,7 +12,7 @@ def _write_flags(flags: dict):
     data.update(flags)
     CONTROL_FILE.write_text(json.dumps(data, indent=2))
 
-def show_trading_controls():
+def show_trading_controls(sim_portfolio=None):
     st.sidebar.header("🔧 Trading Controls")
 
     if st.sidebar.button("Start Crypto Bot"):
@@ -30,3 +30,7 @@ def show_trading_controls():
     if st.sidebar.button("Stop All Bots"):
         _write_flags({"stop_all": True})
         st.sidebar.warning("⏸ All bots STOPPED")
+
+    if sim_portfolio and st.sidebar.button("Reset Simulation"):
+        sim_portfolio.reset()
+        st.sidebar.success("🧹 Simulation reset")

@@ -124,7 +124,16 @@ class StockAPI(BaseAPI):
                 trade_price = float(data.get("price") or data.get("last_trade_price", 0))
             except Exception:
                 trade_price = 0.0
-        await log_live_trade(symbol, side, quantity, trade_price, self.config)
+        await log_live_trade(
+            symbol,
+            side,
+            quantity,
+            trade_price,
+            self.config,
+            market="stock",
+            confidence=kwargs.get("confidence"),
+            risk_pct=self.config.get("stocks_settings", {}).get("risk_per_trade") * 100 if self.config.get("stocks_settings") else None,
+        )
         return result
 
     async def close(self):
