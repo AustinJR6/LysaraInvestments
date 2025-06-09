@@ -7,6 +7,7 @@ from urllib.parse import urljoin
 import aiohttp
 import asyncio
 from api.base_api import BaseAPI
+from utils.guardrails import log_live_trade
 
 class StockAPI(BaseAPI):
     """
@@ -20,12 +21,17 @@ class StockAPI(BaseAPI):
         base_url: str = "https://api.robinhood.com",
         simulation_mode: bool = True,
         portfolio=None,
+        config: dict | None = None,
+        trade_cooldown: int = 30,
     ):
         super().__init__(base_url)
         self.api_key = api_key
         self.api_secret = api_secret
         self.simulation_mode = simulation_mode
         self.portfolio = portfolio
+        self.config = config or {}
+        self.trade_cooldown = trade_cooldown
+        self._last_trade: dict[str, float] = {}
         # For Robinhood, token auth might go here
         if not simulation_mode:
             # Example header for real-world usage
@@ -82,6 +88,14 @@ class StockAPI(BaseAPI):
         """
         Place market or limit order; returns order details or mock.
         """
+        if not self.simulation_mode:
+            now = asyncio.get_event_loop().time()
+            last = self._last_trade.get(symbol)
+            if last and now - last < self.trade_cooldown:
+                logging.warning(f"Duplicate trade blocked for {symbol}")
+                return {"status": "blocked", "reason": "duplicate"}
+            self._last_trade[symbol] = now
+
         if self.simulation_mode:
             logging.info(f"StockAPI: sim {order_type} order {side} {quantity} {symbol}")
             trade_price = price
@@ -102,7 +116,16 @@ class StockAPI(BaseAPI):
         }
         if order_type == "limit" and price is not None:
             body["price"] = price
-        return await self.post(path, body)
+        result = await self.post(path, body)
+        trade_price = price if price is not None else 0.0
+        if trade_price == 0.0:
+            try:
+                data = await self.fetch_market_price(symbol)
+                trade_price = float(data.get("price") or data.get("last_trade_price", 0))
+            except Exception:
+                trade_price = 0.0
+        await log_live_trade(symbol, side, quantity, trade_price, self.config)
+        return result
 
     async def close(self):
         """Clean up HTTP session."""

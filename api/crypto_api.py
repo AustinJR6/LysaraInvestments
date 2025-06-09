@@ -7,6 +7,7 @@ import base64
 import json
 import logging
 from api.base_api import BaseAPI
+from utils.guardrails import log_live_trade
 
 class CryptoAPI(BaseAPI):
     """
@@ -21,6 +22,8 @@ class CryptoAPI(BaseAPI):
         base_url: str = "https://api.pro.coinbase.com",
         simulation_mode: bool = True,
         portfolio=None,
+        config: dict | None = None,
+        trade_cooldown: int = 30,
     ):
         super().__init__(base_url)
         self.api_key = api_key
@@ -28,6 +31,9 @@ class CryptoAPI(BaseAPI):
         self.passphrase = passphrase or ""
         self.simulation_mode = simulation_mode
         self.portfolio = portfolio
+        self.config = config or {}
+        self.trade_cooldown = trade_cooldown
+        self._last_trade: dict[str, float] = {}
         self._mock_equity = 10000.0
         self._mock_holdings = {}
 
@@ -108,6 +114,14 @@ class CryptoAPI(BaseAPI):
         """
         Places a market or limit order.
         """
+        if not self.simulation_mode:
+            now = time.time()
+            last = self._last_trade.get(product_id)
+            if last and now - last < self.trade_cooldown:
+                logging.warning(f"Duplicate trade blocked for {product_id}")
+                return {"status": "blocked", "reason": "duplicate"}
+            self._last_trade[product_id] = now
+
         if self.simulation_mode:
             logging.info(f"CryptoAPI: sim {order_type} order {side} {size} {product_id}")
             trade_price = price
@@ -129,7 +143,16 @@ class CryptoAPI(BaseAPI):
             order["price"] = str(price)
             order.setdefault("time_in_force", "GTC")
 
-        return await self.post("/orders", order)
+        result = await self.post("/orders", order)
+        trade_price = price if price is not None else 0.0
+        if trade_price == 0.0:
+            try:
+                data = await self.fetch_market_price(product_id)
+                trade_price = float(data.get("price", 0))
+            except Exception:
+                trade_price = 0.0
+        await log_live_trade(product_id, side, size, trade_price, self.config)
+        return result
 
     async def close(self):
         """Clean up HTTP session."""

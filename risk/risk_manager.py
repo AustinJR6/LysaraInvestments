@@ -14,6 +14,7 @@ class RiskManager:
         self.daily_loss = 0.0
         self.consec_losses = 0
         self.last_equity = None
+        self.start_equity = None
 
     async def update_equity(self):
         info = await self.api.fetch_account_info()
@@ -37,6 +38,20 @@ class RiskManager:
         if self.daily_loss <= self.max_daily_loss or self.consec_losses >= self.max_consec_losses:
             self.drawdown_triggered = True
             logging.warning("Drawdown or loss limit reached. Trading disabled.")
+
+    async def check_daily_loss(self) -> bool:
+        prev = self.last_equity
+        equity = await self.update_equity()
+        if equity is None:
+            return True
+        if self.start_equity is None:
+            self.start_equity = equity
+        if prev is not None and equity < prev:
+            self.daily_loss += equity - prev
+        if (equity - self.start_equity) <= self.max_daily_loss:
+            self.drawdown_triggered = True
+            logging.warning("Daily loss limit exceeded. Trading halted for the day.")
+        return not self.drawdown_triggered
 
     def reset_daily_risk(self):
         self.daily_loss = 0.0

@@ -49,6 +49,7 @@ class BotLauncher:
             secret_key=api_keys["coinbase_secret"],
             simulation_mode=self.config.get("simulation_mode", True),
             portfolio=self.sim_portfolio,
+            config=self.config,
         )
 
         await crypto_api.fetch_account_info()

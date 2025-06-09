@@ -36,6 +36,9 @@ class StockMomentumStrategy:
             await asyncio.sleep(self.interval)
 
     async def enter_trade(self, symbol, price, side):
+        if not await self.risk.check_daily_loss():
+            logging.warning("Daily loss limit reached. Trade blocked.")
+            return
         qty = self.risk.get_position_size(price)
         if qty <= 0:
             logging.warning(f"StockMomentum: invalid position size for {symbol}")
