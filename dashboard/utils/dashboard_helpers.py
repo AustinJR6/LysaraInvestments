@@ -25,4 +25,5 @@ def auto_refresh(interval: int = 5):
         st.session_state["_last_refresh"] = time.time()
     elif time.time() - st.session_state["_last_refresh"] > interval:
         st.session_state["_last_refresh"] = time.time()
-        st.experimental_rerun()
+        st.rerun()
+
