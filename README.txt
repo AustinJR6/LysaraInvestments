@@ -19,4 +19,8 @@ set `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` to enable live or paper stock tradi
 through Alpaca.
 
 To use the optional AI strategist module, set `OPENAI_API_KEY` and enable it with
-`ENABLE_AI_STRATEGY=true`.
+`ENABLE_AI_STRATEGY=true`.  The application now loads `.env` automatically so the
+key is picked up even when modules are imported before the configuration stage.
+
+Additional market data feeds are available including real-time bars from Alpaca
+and price polling from CoinGecko.

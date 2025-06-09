@@ -6,7 +6,12 @@ from datetime import datetime
 import asyncio
 
 import openai
+from dotenv import load_dotenv
 
+# Ensure .env variables are loaded before accessing the API key.  This allows
+# modules that import ai_strategist before the main configuration loads the
+# environment to still pick up the key.
+load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 SYSTEM_PROMPT = (

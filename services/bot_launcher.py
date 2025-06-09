@@ -8,6 +8,8 @@ from api.forex_api import ForexAPI
 from risk.risk_manager import RiskManager
 from strategies.crypto.momentum import MomentumStrategy
 from data.market_data_crypto import start_crypto_market_feed
+from data.market_data_coingecko import start_coingecko_polling
+from data.market_data_alpaca import start_stock_ws_feed
 from db.db_manager import DatabaseManager
 from services.background_tasks import BackgroundTasks
 from services.sim_portfolio import SimulatedPortfolio
@@ -66,6 +68,7 @@ class BotLauncher:
         )
 
         asyncio.create_task(start_crypto_market_feed(symbols))
+        asyncio.create_task(start_coingecko_polling(symbols))
         asyncio.create_task(strategy.run())
 
     async def start_stock_bots(self):
@@ -111,6 +114,7 @@ class BotLauncher:
         from data.market_data_stocks import start_stock_polling_loop
 
         asyncio.create_task(start_stock_polling_loop(symbols, stock_api))
+        asyncio.create_task(start_stock_ws_feed(symbols, alpaca_key, alpaca_secret, base_url))
         asyncio.create_task(strategy.run())
 
     async def start_forex_bots(self):
