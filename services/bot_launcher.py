@@ -24,8 +24,12 @@ class BotLauncher:
         self.sim_portfolio = None
         if self.config.get("simulation_mode", True):
             starting = self.config.get("starting_balance", 1000.0)
-            state_file = self.config.get("sim_state_file", "data/sim_state.json")
-            self.sim_portfolio = SimulatedPortfolio(starting_balance=starting, state_file=state_file)
+            state_file = self.config.get(
+                "sim_state_file", "data/sim_state.json"
+            )
+            self.sim_portfolio = SimulatedPortfolio(
+                starting_balance=starting, state_file=state_file
+            )
 
     def start_all_bots(self):
         asyncio.create_task(self.bg_tasks.run_sentiment_loop())
@@ -46,7 +50,9 @@ class BotLauncher:
         settings = self.config.get("crypto_settings", {})
         base_symbols_env = os.getenv("TRADE_SYMBOLS")
         symbols = (
-            base_symbols_env.split(",") if base_symbols_env else settings.get("trade_symbols", ["BTC-USD", "ETH-USD"])
+            base_symbols_env.split(",")
+            if base_symbols_env
+            else settings.get("trade_symbols", ["BTC-USD", "ETH-USD"])
         )
 
         extra_symbols = []
@@ -96,9 +102,14 @@ class BotLauncher:
 
         alpaca_key = api_keys.get("alpaca")
         alpaca_secret = api_keys.get("alpaca_secret")
-        base_url = api_keys.get("alpaca_base_url", "https://paper-api.alpaca.markets")
+        base_url = api_keys.get(
+            "alpaca_base_url",
+            "https://paper-api.alpaca.markets",
+        )
         if not alpaca_key or not alpaca_secret:
-            logging.error("Alpaca API credentials missing. Stock bots disabled.")
+            logging.error(
+                "Alpaca API credentials missing. Stock bots disabled."
+            )
             return
 
         from services.alpaca_manager import AlpacaManager
@@ -130,7 +141,14 @@ class BotLauncher:
         from data.market_data_stocks import start_stock_polling_loop
 
         asyncio.create_task(start_stock_polling_loop(symbols, stock_api))
-        asyncio.create_task(start_stock_ws_feed(symbols, alpaca_key, alpaca_secret, base_url))
+        asyncio.create_task(
+            start_stock_ws_feed(
+                symbols,
+                alpaca_key,
+                alpaca_secret,
+                base_url,
+            )
+        )
         asyncio.create_task(strategy.run())
 
     async def start_forex_bots(self):
@@ -143,7 +161,9 @@ class BotLauncher:
         api_key = api_keys.get("oanda")
         account_id = api_keys.get("oanda_account_id")
         if not api_key or not account_id:
-            logging.error("OANDA API credentials missing or invalid. Bots disabled.")
+            logging.error(
+                "OANDA API credentials missing or invalid. Bots disabled."
+            )
             return
 
         forex_api = ForexAPI(
@@ -170,5 +190,11 @@ class BotLauncher:
 
         from data.market_data_forex import start_forex_polling_loop
 
-        asyncio.create_task(start_forex_polling_loop(instruments, api_key, account_id))
+        asyncio.create_task(
+            start_forex_polling_loop(
+                instruments,
+                api_key,
+                account_id,
+            )
+        )
         asyncio.create_task(strategy.run())
