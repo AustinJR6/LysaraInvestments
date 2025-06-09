@@ -5,3 +5,5 @@ streamlit
 textblob
 websockets
 python-dotenv
+alpaca-trade-api
+openai

@@ -4,6 +4,7 @@ from .forex_view import show_forex_view
 from .trade_history_view import show_trade_history
 from .performance_view import show_performance_view
 from .log_view import show_log_view
+from .portfolio_view import show_portfolio_table, show_sim_summary
 
 __all__ = [
     "show_crypto_view",
@@ -12,4 +13,6 @@ __all__ = [
     "show_trade_history",
     "show_performance_view",
     "show_log_view",
+    "show_portfolio_table",
+    "show_sim_summary",
 ]

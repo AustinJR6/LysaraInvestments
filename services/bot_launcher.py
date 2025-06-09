@@ -4,7 +4,6 @@ import asyncio
 import logging
 
 from api.crypto_api import CryptoAPI
-from api.stock_api import StockAPI
 from api.forex_api import ForexAPI
 from risk.risk_manager import RiskManager
 from strategies.crypto.momentum import MomentumStrategy
@@ -49,6 +48,7 @@ class BotLauncher:
             secret_key=api_keys["coinbase_secret"],
             simulation_mode=self.config.get("simulation_mode", True),
             portfolio=self.sim_portfolio,
+            config=self.config,
         )
 
         await crypto_api.fetch_account_info()
@@ -69,9 +69,86 @@ class BotLauncher:
         asyncio.create_task(strategy.run())
 
     async def start_stock_bots(self):
-        logging.info(" Stock bot placeholder started.")
-        # Fill in with real strategy and feed integration later
+        logging.info("Starting stock bots...")
+
+        api_keys = self.config.get("api_keys", {})
+        settings = self.config.get("stocks_settings", {})
+        symbols = settings.get("trade_symbols", ["AAPL", "TSLA"])
+
+        alpaca_key = api_keys.get("alpaca")
+        alpaca_secret = api_keys.get("alpaca_secret")
+        base_url = api_keys.get("alpaca_base_url", "https://paper-api.alpaca.markets/v2")
+        if not alpaca_key or not alpaca_secret:
+            logging.error("Alpaca API credentials missing. Stock bots disabled.")
+            return
+
+        from services.alpaca_manager import AlpacaManager
+
+        stock_api = AlpacaManager(
+            api_key=alpaca_key,
+            api_secret=alpaca_secret,
+            base_url=base_url,
+            simulation_mode=self.config.get("simulation_mode", True),
+            portfolio=self.sim_portfolio,
+            config=self.config,
+        )
+
+        await stock_api.get_account()
+
+        risk = RiskManager(stock_api, settings)
+        await risk.update_equity()
+
+        from strategies.stocks.stock_momentum import StockMomentumStrategy
+
+        strategy = StockMomentumStrategy(
+            api=stock_api,
+            risk=risk,
+            config=settings,
+            db=self.db,
+            symbol_list=symbols,
+        )
+
+        from data.market_data_stocks import start_stock_polling_loop
+
+        asyncio.create_task(start_stock_polling_loop(symbols, stock_api))
+        asyncio.create_task(strategy.run())
 
     async def start_forex_bots(self):
-        logging.info(" Forex bot placeholder started.")
-        # Fill in with real strategy and feed integration later
+        logging.info("Starting forex bots...")
+
+        api_keys = self.config.get("api_keys", {})
+        settings = self.config.get("forex_settings", {})
+        instruments = settings.get("trade_symbols", ["EUR_USD", "GBP_USD"])
+
+        api_key = api_keys.get("oanda")
+        account_id = api_keys.get("oanda_account_id")
+        if not api_key or not account_id:
+            logging.error("OANDA API credentials missing or invalid. Bots disabled.")
+            return
+
+        forex_api = ForexAPI(
+            api_key=api_key,
+            account_id=account_id,
+            simulation_mode=self.config.get("simulation_mode", True),
+            portfolio=self.sim_portfolio,
+        )
+
+        await forex_api.get_account_info()
+
+        risk = RiskManager(forex_api, settings)
+        await risk.update_equity()
+
+        from strategies.forex.rsi_trend import ForexRSITrendStrategy
+
+        strategy = ForexRSITrendStrategy(
+            api=forex_api,
+            risk=risk,
+            config=settings,
+            db=self.db,
+            symbol_list=instruments,
+        )
+
+        from data.market_data_forex import start_forex_polling_loop
+
+        asyncio.create_task(start_forex_polling_loop(instruments, api_key, account_id))
+        asyncio.create_task(strategy.run())

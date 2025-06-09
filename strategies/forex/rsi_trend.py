@@ -1,30 +1,34 @@
-# strategies/stocks/stock_momentum.py
-
 import asyncio
 import logging
 from datetime import datetime
 import numpy as np
-
-from indicators.technical_indicators import moving_average
+from indicators.technical_indicators import relative_strength_index
+from risk.risk import DynamicRisk
 from services.ai_strategist import get_ai_trade_decision
 
-class StockMomentumStrategy:
+class ForexRSITrendStrategy:
+    """Simple RSI-based trend following strategy for Forex."""
+
     def __init__(self, api, risk, config, db, symbol_list):
         self.api = api
         self.risk = risk
         self.config = config
         self.db = db
         self.symbols = symbol_list
-        self.price_history = {symbol: [] for symbol in symbol_list}
-        self.ma_period = config.get("moving_average_period", 20)
-        self.interval = 30  # seconds
+        self.price_history = {s: [] for s in symbol_list}
+        self.interval = 10
+        self.dynamic_risk = DynamicRisk(
+            risk,
+            config.get("atr_period", 14),
+            config.get("volatility_multiplier", 3),
+        )
 
     async def run(self):
         while True:
             for symbol in self.symbols:
                 try:
-                    price_data = await self.api.fetch_market_price(symbol)
-                    price = float(price_data.get("price") or price_data.get("last_trade_price", 0))
+                    data = await self.api.fetch_price(symbol)
+                    price = float(data.get("bid") or 0)
                     self.price_history[symbol].append(price)
 
                     if len(self.price_history[symbol]) > 100:
@@ -46,10 +50,8 @@ class StockMomentumStrategy:
                         )
                     else:
                         logging.info(f"AI decision skipped: {decision}")
-
                 except Exception as e:
-                    logging.error(f"[StockMomentum] Error for {symbol}: {e}")
-
+                    logging.error(f"[RSITrend] Error for {symbol}: {e}")
             await asyncio.sleep(self.interval)
 
     def _build_context(self, symbol: str, price: float) -> dict:
@@ -84,13 +86,10 @@ class StockMomentumStrategy:
             "timestamp": datetime.utcnow().isoformat(),
         }
 
-    async def enter_trade(self, symbol, price, side, confidence):
-        if not await self.risk.check_daily_loss():
-            logging.warning("Daily loss limit reached. Trade blocked.")
-            return
-        qty = self.risk.get_position_size(price)
+    async def enter_trade(self, symbol, price, side, confidence, reason):
+        qty = self.dynamic_risk.position_size(price, confidence, self.price_history[symbol])
         if qty <= 0:
-            logging.warning(f"StockMomentum: invalid position size for {symbol}")
+            logging.warning(f"RSITrend: invalid position size for {symbol}")
             return
 
         if not self.config.get("simulation_mode", True) and not self.config.get("LIVE_TRADING_ENABLED", True):
@@ -98,10 +97,9 @@ class StockMomentumStrategy:
             return
 
         await self.api.place_order(
-            symbol=symbol,
-            side=side,
-            quantity=qty,
-            order_type="market",
+            instrument=symbol,
+            units=qty if side == "buy" else -qty,
+            order_type="MARKET",
             price=price,
             confidence=confidence,
         )
@@ -111,10 +109,10 @@ class StockMomentumStrategy:
             side=side,
             quantity=qty,
             price=price,
-            reason="ai",
-            market="stocks"
+            reason=reason,
+            market="forex",
         )
 
         logging.info(
-            f"{side.upper()} {symbol} @ {price} conf={confidence} via ai strategist"
+            f"{side.upper()} {symbol} @ {price} conf={confidence} reason={reason} size={qty}"
         )

@@ -55,6 +55,39 @@ def get_last_trade(db_path: str = DB_PATH):
     return trades[0] if trades else None
 
 
+def get_last_trade_per_market(db_path: str = DB_PATH) -> Dict[str, Dict]:
+    """Return the most recent trade for each market."""
+    markets = ["crypto", "stocks", "forex"]
+    result: Dict[str, Dict] = {}
+    conn = _connect(db_path)
+    if not conn:
+        return result
+    cur = conn.cursor()
+    for m in markets:
+        cur.execute(
+            """
+            SELECT timestamp, symbol, side, quantity, price, profit_loss, reason, market
+            FROM trades WHERE market=? ORDER BY timestamp DESC LIMIT 1
+            """,
+            (m,),
+        )
+        row = cur.fetchone()
+        if row:
+            cols = [
+                "timestamp",
+                "symbol",
+                "side",
+                "quantity",
+                "price",
+                "pnl",
+                "reason",
+                "market",
+            ]
+            result[m] = dict(zip(cols, row))
+    conn.close()
+    return result
+
+
 def get_equity(db_path: str = DB_PATH) -> float:
     conn = _connect(db_path)
     if not conn:

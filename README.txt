@@ -12,3 +12,11 @@ Lysara Investments is a unified, modular trading engine designed to execute algo
 
 ## 🗂️ Project Structure
 
+### Environment Configuration
+
+Create a `.env` file based on `.env.example` and populate your API keys. At a minimum,
+set `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` to enable live or paper stock trading
+through Alpaca.
+
+To use the optional AI strategist module, set `OPENAI_API_KEY` and enable it with
+`ENABLE_AI_STRATEGY=true`.

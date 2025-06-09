@@ -9,10 +9,12 @@ if sys.platform.startswith("win"):
 import logging
 from config.config_manager import ConfigManager
 from utils.logger import setup_logging
+from utils.guardrails import confirm_live_mode
 from services.bot_launcher import BotLauncher
 
 async def main():
     config = ConfigManager().load_config()
+    confirm_live_mode(config.get("simulation_mode", True))
 
     setup_logging(
         level=config.get("log_level", "INFO"),
@@ -38,3 +40,4 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         logging.warning("Shutdown requested. Exiting gracefully.")
+
