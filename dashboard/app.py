@@ -51,6 +51,9 @@ def main():
     auto_refresh(5)
 
     st.title("🌐 Lysara Investments Dashboard")
+    mode = "LIVE" if not ConfigManager().load_config().get("simulation_mode", True) else "SIM"
+    banner_color = "red" if mode == "LIVE" else "green"
+    st.markdown(f"<div style='background-color:{banner_color};padding:6px;text-align:center;color:white;'>Trading Mode: {mode}</div>", unsafe_allow_html=True)
 
     # Sidebar controls
     show_trading_controls()

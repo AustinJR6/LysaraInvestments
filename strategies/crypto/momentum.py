@@ -58,6 +58,9 @@ class MomentumStrategy:
         return (cp + reddit_avg + news) / 3
 
     async def enter_trade(self, symbol: str, price: float, signal: Signal):
+        if not await self.risk.check_daily_loss():
+            logging.warning("Daily loss limit reached. Trade blocked.")
+            return
         qty = self.dynamic_risk.position_size(price, signal.confidence, self.price_history[symbol])
         if qty <= 0:
             logging.warning("Momentum: invalid position size.")

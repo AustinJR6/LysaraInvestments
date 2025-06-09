@@ -49,6 +49,9 @@ class PairsTradingStrategy:
         return float(data.get("price", 0))
 
     async def trade_pair(self, direction: str, price_1: float, price_2: float, spread: float):
+        if not await self.risk.check_daily_loss():
+            logging.warning("Daily loss limit reached. Trade blocked.")
+            return
         qty_1 = self.risk.get_position_size(price_1)
         qty_2 = self.risk.get_position_size(price_2)
 
