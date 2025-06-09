@@ -3,7 +3,7 @@ import logging
 from typing import List, Dict
 
 from api.crypto_api import CryptoAPI
-from api.stock_api import StockAPI
+from services.alpaca_manager import AlpacaManager
 from api.forex_api import ForexAPI
 from services.sim_portfolio import SimulatedPortfolio
 
@@ -49,28 +49,26 @@ class PortfolioManager:
             except Exception as e:
                 logging.error(f"Failed to fetch crypto holdings: {e}")
 
-        # Placeholder for stock holdings (Robinhood, etc.)
-        if api_keys.get("robinhood"):
+        # Stock holdings via Alpaca
+        if api_keys.get("alpaca") and api_keys.get("alpaca_secret"):
             try:
-                api = StockAPI(
-                    api_key=api_keys.get("robinhood"),
-                    api_secret=api_keys.get("robinhood_secret", ""),
+                api = AlpacaManager(
+                    api_key=api_keys.get("alpaca"),
+                    api_secret=api_keys.get("alpaca_secret"),
+                    base_url=api_keys.get("alpaca_base_url", "https://paper-api.alpaca.markets/v2"),
                     simulation_mode=False,
                 )
-                data = await api.fetch_holdings()
-                for asset, qty in data.items():
-                    price = await api.fetch_market_price(asset)
-                    curr = float(price.get("last_trade_price", price.get("price", 0)))
+                positions = await api.get_positions()
+                for p in positions:
                     holdings.append(
                         {
-                            "asset": asset,
-                            "quantity": qty,
-                            "entry_price": None,
-                            "current_price": curr,
-                            "pnl": None,
+                            "asset": p.symbol,
+                            "quantity": float(p.qty),
+                            "entry_price": float(p.avg_entry_price),
+                            "current_price": float(p.current_price),
+                            "pnl": float(p.unrealized_pl),
                         }
                     )
-                await api.close()
             except Exception as e:
                 logging.error(f"Failed to fetch stock holdings: {e}")
 
@@ -130,31 +128,29 @@ class PortfolioManager:
         return holdings
 
     async def _fetch_stock_holdings(self) -> List[Dict]:
-        """Fetch stock holdings via Robinhood or other API."""
+        """Fetch stock holdings via Alpaca."""
         holdings: List[Dict] = []
         api_keys = self.config.get("api_keys", {})
-        if not api_keys.get("robinhood"):
+        if not (api_keys.get("alpaca") and api_keys.get("alpaca_secret")):
             return holdings
         try:
-            api = StockAPI(
-                api_key=api_keys.get("robinhood"),
-                api_secret=api_keys.get("robinhood_secret", ""),
+            api = AlpacaManager(
+                api_key=api_keys.get("alpaca"),
+                api_secret=api_keys.get("alpaca_secret"),
+                base_url=api_keys.get("alpaca_base_url", "https://paper-api.alpaca.markets/v2"),
                 simulation_mode=False,
             )
-            data = await api.fetch_holdings()
-            for asset, qty in data.items():
-                price = await api.fetch_market_price(asset)
-                curr = float(price.get("last_trade_price", price.get("price", 0)))
+            positions = await api.get_positions()
+            for p in positions:
                 holdings.append(
                     {
-                        "asset": asset,
-                        "quantity": qty,
-                        "entry_price": None,
-                        "current_price": curr,
-                        "pnl": None,
+                        "asset": p.symbol,
+                        "quantity": float(p.qty),
+                        "entry_price": float(p.avg_entry_price),
+                        "current_price": float(p.current_price),
+                        "pnl": float(p.unrealized_pl),
                     }
                 )
-            await api.close()
         except Exception as e:
             logging.error(f"Failed to fetch stock holdings: {e}")
         return holdings
