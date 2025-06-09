@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import os
 
 from api.crypto_api import CryptoAPI
 from api.forex_api import ForexAPI
@@ -95,7 +96,7 @@ class BotLauncher:
 
         alpaca_key = api_keys.get("alpaca")
         alpaca_secret = api_keys.get("alpaca_secret")
-        base_url = api_keys.get("alpaca_base_url", "https://paper-api.alpaca.markets/v2")
+        base_url = api_keys.get("alpaca_base_url", "https://paper-api.alpaca.markets")
         if not alpaca_key or not alpaca_secret:
             logging.error("Alpaca API credentials missing. Stock bots disabled.")
             return

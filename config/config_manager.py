@@ -24,7 +24,7 @@ class ConfigManager:
             'coinbase_secret': os.getenv('COINBASE_SECRET_KEY'),
             'alpaca': os.getenv('ALPACA_API_KEY'),
             'alpaca_secret': os.getenv('ALPACA_SECRET_KEY'),
-            'alpaca_base_url': os.getenv('ALPACA_BASE_URL', 'https://paper-api.alpaca.markets/v2'),
+            'alpaca_base_url': os.getenv('ALPACA_BASE_URL', 'https://paper-api.alpaca.markets'),
             'newsapi': os.getenv('NEWSAPI_KEY'),
             'cryptopanic': os.getenv('CRYPTOPANIC_KEY'),
             'slack_webhook': os.getenv('SLACK_WEBHOOK_URL'),

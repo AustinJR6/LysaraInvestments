@@ -55,7 +55,7 @@ class PortfolioManager:
                 api = AlpacaManager(
                     api_key=api_keys.get("alpaca"),
                     api_secret=api_keys.get("alpaca_secret"),
-                    base_url=api_keys.get("alpaca_base_url", "https://paper-api.alpaca.markets/v2"),
+                    base_url=api_keys.get("alpaca_base_url", "https://paper-api.alpaca.markets"),
                     simulation_mode=False,
                 )
                 positions = await api.get_positions()
@@ -137,7 +137,7 @@ class PortfolioManager:
             api = AlpacaManager(
                 api_key=api_keys.get("alpaca"),
                 api_secret=api_keys.get("alpaca_secret"),
-                base_url=api_keys.get("alpaca_base_url", "https://paper-api.alpaca.markets/v2"),
+                base_url=api_keys.get("alpaca_base_url", "https://paper-api.alpaca.markets"),
                 simulation_mode=False,
             )
             positions = await api.get_positions()
