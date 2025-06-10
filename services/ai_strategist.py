@@ -23,13 +23,23 @@ RETURN_INSTRUCTION = "Return JSON: { action, confidence (0-1), reason }"
 
 async def _call_openai(messages: list[dict]) -> str:
     """Call OpenAI ChatCompletion API and return the message content."""
-    resp = await asyncio.to_thread(
-        openai.ChatCompletion.create,
-        model="gpt-3.5-turbo",
-        messages=messages,
-        temperature=0.2,
-    )
-    return resp["choices"][0]["message"]["content"].strip()
+    try:
+        resp = await asyncio.to_thread(
+            openai.chat.completions.create,
+            model="gpt-3.5-turbo",
+            messages=messages,
+            temperature=0.2,
+        )
+        return resp.choices[0].message.content.strip()
+    except AttributeError:
+        # Fallback for older openai<1.0
+        resp = await asyncio.to_thread(
+            openai.ChatCompletion.create,
+            model="gpt-3.5-turbo",
+            messages=messages,
+            temperature=0.2,
+        )
+        return resp["choices"][0]["message"]["content"].strip()
 
 
 def _log_decision(context: dict, decision: dict) -> None:

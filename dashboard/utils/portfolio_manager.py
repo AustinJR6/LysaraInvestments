@@ -30,6 +30,7 @@ class PortfolioManager:
                 api = CryptoAPI(
                     api_key=api_keys.get("coinbase"),
                     secret_key=api_keys.get("coinbase_secret", ""),
+                    passphrase=api_keys.get("coinbase_passphrase", ""),
                     simulation_mode=False,
                 )
                 data = await api.fetch_holdings()
@@ -107,6 +108,7 @@ class PortfolioManager:
             api = CryptoAPI(
                 api_key=api_keys.get("coinbase"),
                 secret_key=api_keys.get("coinbase_secret", ""),
+                passphrase=api_keys.get("coinbase_passphrase", ""),
                 simulation_mode=False,
             )
             data = await api.fetch_holdings()
