@@ -15,24 +15,42 @@ def create_trades_table(conn: sqlite3.Connection):
             price REAL NOT NULL,
             profit_loss REAL,
             reason TEXT,
-            market TEXT NOT NULL
+            market TEXT NOT NULL,
+            conviction REAL,
+            signal_profile TEXT
         )
     """)
     conn.commit()
 
-def insert_trade(conn: sqlite3.Connection, symbol: str, side: str, quantity: float, price: float, profit_loss: float = None, reason: str = "", market: str = "crypto"):
+def insert_trade(
+    conn: sqlite3.Connection,
+    symbol: str,
+    side: str,
+    quantity: float,
+    price: float,
+    profit_loss: float = None,
+    reason: str = "",
+    market: str = "crypto",
+    conviction: float | None = None,
+    signal_profile: str | None = None,
+):
     cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO trades (timestamp, symbol, side, quantity, price, profit_loss, reason, market)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        datetime.utcnow().isoformat(),
-        symbol,
-        side,
-        quantity,
-        price,
-        profit_loss,
-        reason,
-        market
-    ))
+    cursor.execute(
+        """
+        INSERT INTO trades (timestamp, symbol, side, quantity, price, profit_loss, reason, market, conviction, signal_profile)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            datetime.utcnow().isoformat(),
+            symbol,
+            side,
+            quantity,
+            price,
+            profit_loss,
+            reason,
+            market,
+            conviction,
+            signal_profile,
+        ),
+    )
     conn.commit()
