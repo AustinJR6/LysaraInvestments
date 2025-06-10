@@ -9,6 +9,10 @@ Lysara Investments is a unified, modular trading engine designed to execute algo
 - 🧠 Technical and sentiment-based strategies
 - 🛡️ Centralized risk management system
 - 🔄 Fully asynchronous and expandable
+- 🚦 Signal fusion engine combining technical and sentiment data
+- 🔍 Opportunity scanner for trending coins
+- 📈 Market state monitor via CoinGecko
+- 🔌 Dynamic strategy loader
 
 ## 🗂️ Project Structure
 
@@ -29,3 +33,7 @@ To let the bot automatically suggest a few trending symbols each day, set
 `ENABLE_AI_ASSET_DISCOVERY=true` in your `.env`.  Provide a comma separated list
 of your preferred `TRADE_SYMBOLS` which will remain intact while any AI picked
 symbols are added on top.
+
+The new `OpportunityScanner` leverages CoinGecko trending data and sentiment
+signals to surface promising assets. Temporary symbols will be added for one
+hour when discovered.

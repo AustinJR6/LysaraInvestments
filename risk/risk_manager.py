@@ -66,3 +66,20 @@ class RiskManager:
         self.daily_loss = 0.0
         self.consec_losses = 0
         self.drawdown_triggered = False
+
+    def reset_streak(self):
+        self.consec_losses = 0
+
+    def sentiment_lockout(self, score_delta: float, threshold: float = -0.5) -> bool:
+        if score_delta <= threshold:
+            logging.warning("Sentiment crash detected. Locking trading.")
+            self.drawdown_triggered = True
+            return True
+        return False
+
+    def volatility_lockout(self, move: float, threshold: float = 0.15) -> bool:
+        if abs(move) >= threshold:
+            logging.warning("Volatility lockout triggered.")
+            self.drawdown_triggered = True
+            return True
+        return False
