@@ -1,14 +1,23 @@
 import asyncio
 import logging
+import os
 from typing import Optional
 
-import alpaca_trade_api as tradeapi
+from dotenv import load_dotenv
 
 from utils.guardrails import log_live_trade
+from alpaca_client import (
+    get_account,
+    get_positions,
+    place_order as api_place_order,
+    fetch_market_price,
+)
+
+load_dotenv()
 
 
 class AlpacaManager:
-    """Wrapper around alpaca-trade-api for async usage."""
+    """Thin wrapper around Alpaca REST API using `requests`."""
 
     def __init__(
         self,
@@ -25,23 +34,26 @@ class AlpacaManager:
         self.config = config or {}
         self.trade_cooldown = trade_cooldown
         self._last_trade: dict[str, float] = {}
-        self.client = tradeapi.REST(api_key, api_secret, base_url, api_version="v2")
+
+        # ensure credentials are available to alpaca_client
+        os.environ.setdefault("ALPACA_API_KEY", api_key)
+        os.environ.setdefault("ALPACA_SECRET_KEY", api_secret)
+        os.environ.setdefault("ALPACA_BASE_URL", base_url)
 
     async def get_account(self):
         if self.simulation_mode:
             logging.debug("AlpacaManager: returning mock account data")
             return {"cash": 10000.0, "equity": 10000.0, "buying_power": 10000.0}
-        return await asyncio.to_thread(self.client.get_account)
+        return await get_account()
 
     async def get_positions(self):
         if self.simulation_mode:
             logging.debug("AlpacaManager: returning empty positions in sim mode")
             return []
-        return await asyncio.to_thread(self.client.list_positions)
+        return await get_positions()
 
     async def fetch_market_price(self, symbol: str) -> dict:
-        trade = await asyncio.to_thread(self.client.get_latest_trade, symbol)
-        return {"price": float(trade.price)}
+        return await fetch_market_price(symbol)
 
     async def place_order(
         self,
@@ -51,6 +63,7 @@ class AlpacaManager:
         type: str = "market",
         time_in_force: str = "day",
         price: float | None = None,
+        **kwargs,
     ):
         if self.simulation_mode:
             logging.info(f"[SIM] {side.upper()} {qty} {symbol}")
@@ -67,16 +80,16 @@ class AlpacaManager:
             return {"status": "blocked", "reason": "duplicate"}
         self._last_trade[symbol] = now
 
-        order = await asyncio.to_thread(
-            self.client.submit_order,
+        order = await api_place_order(
             symbol=symbol,
-            qty=qty,
             side=side,
+            qty=qty,
             type=type,
             time_in_force=time_in_force,
-            limit_price=price if type == "limit" else None,
         )
-        trade_price = price if price is not None else (await self.fetch_market_price(symbol)).get("price", 0)
+        trade_price = price if price is not None else (
+            await self.fetch_market_price(symbol)
+        ).get("price", 0)
         await log_live_trade(
             symbol,
             side,
