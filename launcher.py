@@ -4,6 +4,9 @@ import sys
 import threading
 import time
 from typing import List
+import logging
+
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 
 def stream_output(proc: subprocess.Popen, label: str, buffer: List[str]):
@@ -39,6 +42,8 @@ def start_process(cmd: List[str], label: str):
 
 
 def main():
+    if sys.prefix == sys.base_prefix:
+        logging.warning("⚠️ Warning: Not running inside the virtual environment!")
     parser = argparse.ArgumentParser(description="Launch trading bot and dashboard")
     mode_group = parser.add_mutually_exclusive_group()
     mode_group.add_argument("--simulate", action="store_true", help="Run bot in simulation mode")
