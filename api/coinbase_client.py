@@ -7,7 +7,7 @@ import logging
 import uuid
 from typing import Any, Dict, Optional
 
-from coinbase.advanced_trade.client import AdvancedTradeClient
+from coinbase_advanced_trade import AdvancedTradeClient
 
 from utils.guardrails import log_live_trade
 
