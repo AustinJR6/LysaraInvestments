@@ -17,7 +17,7 @@
     "SOL-USD": 4,
     "ADA-USD": 2
   },
-  "risk_per_trade": 0.02,
+  "risk_per_trade": 0.045,
   "max_drawdown": 0.2,
   "max_daily_loss": -200,
   "atr_period": 14,
