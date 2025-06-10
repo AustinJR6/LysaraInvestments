@@ -6,4 +6,4 @@ textblob
 websockets
 python-dotenv
 alpaca-trade-api
-openai
+openai>=1.0

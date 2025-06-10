@@ -69,6 +69,7 @@ class BotLauncher:
         crypto_api = CryptoAPI(
             api_key=api_keys["coinbase"],
             secret_key=api_keys["coinbase_secret"],
+            passphrase=api_keys.get("coinbase_passphrase", ""),
             simulation_mode=self.config.get("simulation_mode", True),
             portfolio=self.sim_portfolio,
             config=self.config,
