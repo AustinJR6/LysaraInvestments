@@ -2,8 +2,10 @@
 """Real-time stock market data streaming via Alpaca's websocket API."""
 
 import asyncio
+import json
 import logging
-from alpaca_trade_api.stream import Stream
+
+import websockets
 
 
 async def start_stock_ws_feed(
@@ -18,25 +20,35 @@ async def start_stock_ws_feed(
 
     async def handle_bar(bar):
         data = {
-            "symbol": bar.symbol,
-            "price": float(bar.close),
-            "time": bar.timestamp.isoformat(),
+            "symbol": bar["symbol"],
+            "price": float(bar["close"]),
+            "time": bar.get("timestamp", ""),
         }
         if on_bar:
             await on_bar(data)
         else:
             logging.info(f"[ALPACA WS] {data['symbol']} @ {data['price']}")
 
+    url = f"wss://stream.data.alpaca.markets/v2/{data_feed}"
+
     while True:
-        stream = Stream(api_key, api_secret, base_url=base_url, data_feed=data_feed)
-
-        for sym in symbols:
-            stream.subscribe_bars(handle_bar, sym)
-
         try:
-            await stream._run_forever()
+            async with websockets.connect(url) as ws:
+                auth = {"action": "auth", "key": api_key, "secret": api_secret}
+                await ws.send(json.dumps(auth))
+                subs = {"action": "subscribe", "bars": symbols}
+                await ws.send(json.dumps(subs))
+
+                async for msg in ws:
+                    data = json.loads(msg)
+                    for bar in data.get("bars", []):
+                        parsed = {
+                            "symbol": bar.get("S"),
+                            "close": bar.get("c"),
+                            "timestamp": bar.get("t"),
+                        }
+                        await handle_bar(parsed)
         except Exception as e:
             logging.error(f"Alpaca WS error: {e}")
             await asyncio.sleep(5)
-            continue
 
