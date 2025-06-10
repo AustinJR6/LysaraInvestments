@@ -9,3 +9,4 @@ alpaca-trade-api
 openai>=1.0
 pytrends
 coinbase-advanced-py
+coinbase-advanced-trade
