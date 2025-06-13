@@ -118,12 +118,52 @@ def get_performance_metrics(db_path: str = DB_PATH) -> Dict:
     }
 
 
+def get_equity_curve(limit: int = 500, db_path: str = DB_PATH) -> List[Dict]:
+    conn = _connect(db_path)
+    if not conn:
+        return []
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT timestamp, total_equity FROM equity_snapshots ORDER BY timestamp DESC LIMIT ?",
+        (limit,),
+    )
+    rows = cur.fetchall()
+    conn.close()
+    data = [{"timestamp": r[0], "equity": float(r[1])} for r in rows]
+    data.reverse()
+    return data
+
+
 def get_log_lines(limit: int = 200, log_path: str = LOG_PATH) -> List[str]:
     if not Path(log_path).is_file():
         return []
     with open(log_path, "r") as f:
         lines = f.readlines()[-limit:]
     return [l.rstrip() for l in lines]
+
+
+def get_ai_thoughts(limit: int = 50, log_path: str = "logs/ai_decisions.log") -> List[Dict]:
+    """Return recent AI strategist decisions."""
+    path = Path(log_path)
+    if not path.is_file():
+        return []
+    lines = path.read_text().strip().splitlines()[-limit:]
+    entries = []
+    for line in lines:
+        try:
+            ts_part, rest = line.split(" ", 1)
+            ctx_str = rest.split("context=")[1].split(" decision=")[0]
+            dec_str = rest.split("decision=")[1]
+            decision = json.loads(dec_str)
+            entries.append({
+                "timestamp": ts_part,
+                "action": decision.get("action"),
+                "confidence": decision.get("confidence"),
+                "reason": decision.get("reason"),
+            })
+        except Exception:
+            continue
+    return entries
 
 
 def get_sentiment_data(file_path: Path = SENTIMENT_FILE) -> Dict:

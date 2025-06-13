@@ -5,6 +5,9 @@ from .trade_history_view import show_trade_history
 from .performance_view import show_performance_view
 from .log_view import show_log_view
 from .portfolio_view import show_portfolio_table, show_sim_summary
+from .conviction_heatmap import show_conviction_heatmap
+from .ai_thought_view import show_ai_thought_feed
+from .equity_curve_view import show_equity_curve
 
 __all__ = [
     "show_crypto_view",
@@ -15,4 +18,7 @@ __all__ = [
     "show_log_view",
     "show_portfolio_table",
     "show_sim_summary",
+    "show_conviction_heatmap",
+    "show_ai_thought_feed",
+    "show_equity_curve",
 ]

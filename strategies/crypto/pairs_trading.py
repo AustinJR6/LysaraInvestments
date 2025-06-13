@@ -3,15 +3,12 @@
 import asyncio
 import logging
 from indicators.technical_indicators import moving_average
+from strategies.base_strategy import BaseStrategy
 
-class PairsTradingStrategy:
+class PairsTradingStrategy(BaseStrategy):
     def __init__(self, api, risk, config, db, pair=("ETH-USD", "BTC-USD")):
-        self.api = api
-        self.risk = risk
-        self.config = config
-        self.db = db
+        super().__init__(api, risk, config, db, pair)
         self.pair = pair
-        self.price_history = {pair[0]: [], pair[1]: []}
         self.interval = 15  # seconds
 
     async def run(self):

@@ -7,15 +7,11 @@ import numpy as np
 
 from indicators.technical_indicators import moving_average
 from services.ai_strategist import get_ai_trade_decision
+from strategies.base_strategy import BaseStrategy
 
-class StockMomentumStrategy:
+class StockMomentumStrategy(BaseStrategy):
     def __init__(self, api, risk, config, db, symbol_list):
-        self.api = api
-        self.risk = risk
-        self.config = config
-        self.db = db
-        self.symbols = symbol_list
-        self.price_history = {symbol: [] for symbol in symbol_list}
+        super().__init__(api, risk, config, db, symbol_list)
         self.ma_period = config.get("moving_average_period", 20)
         self.interval = 30  # seconds
 

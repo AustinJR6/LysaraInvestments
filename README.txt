@@ -14,6 +14,8 @@ Lysara Investments is a unified, modular trading engine designed to execute algo
 - 📈 Market state monitor via CoinGecko
 - 🔌 Dynamic strategy loader
 - 💬 Uses GPT-4o for AI-driven trade reasoning
+- 🔥 Conviction heatmap and AI thought feed on the dashboard
+- 🌑 Dark theme with real-time equity curve
 
 ## 🗂️ Project Structure
 
