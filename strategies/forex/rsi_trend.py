@@ -5,17 +5,13 @@ import numpy as np
 from indicators.technical_indicators import relative_strength_index
 from risk.risk import DynamicRisk
 from services.ai_strategist import get_ai_trade_decision
+from strategies.base_strategy import BaseStrategy
 
-class ForexRSITrendStrategy:
+class ForexRSITrendStrategy(BaseStrategy):
     """Simple RSI-based trend following strategy for Forex."""
 
     def __init__(self, api, risk, config, db, symbol_list):
-        self.api = api
-        self.risk = risk
-        self.config = config
-        self.db = db
-        self.symbols = symbol_list
-        self.price_history = {s: [] for s in symbol_list}
+        super().__init__(api, risk, config, db, symbol_list)
         self.interval = 10
         self.dynamic_risk = DynamicRisk(
             risk,

@@ -2,15 +2,11 @@
 
 import asyncio
 import logging
+from strategies.base_strategy import BaseStrategy
 
-class BreakoutStrategy:
+class BreakoutStrategy(BaseStrategy):
     def __init__(self, api, risk, config, db, symbol_list):
-        self.api = api
-        self.risk = risk
-        self.config = config
-        self.db = db
-        self.symbols = symbol_list
-        self.price_history = {symbol: [] for symbol in symbol_list}
+        super().__init__(api, risk, config, db, symbol_list)
         self.lookback = 20  # candles
         self.interval = 15  # seconds
 

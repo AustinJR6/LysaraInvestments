@@ -65,6 +65,6 @@ def confirm_live_mode(simulation_mode: bool):
     if not simulation_mode:
         resp = input("[!] SIMULATION_MODE is OFF. Proceed with live trading? (y/N) ")
         if resp.strip().lower() != "y":
-            print("Aborting launch.")
+            logging.warning("Aborting launch.")
             sys.exit(0)
 

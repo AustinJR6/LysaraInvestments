@@ -2,14 +2,11 @@
 
 import asyncio
 import logging
+from strategies.base_strategy import BaseStrategy
 
-class EarningsPlayStrategy:
+class EarningsPlayStrategy(BaseStrategy):
     def __init__(self, api, risk, config, db, symbol_list):
-        self.api = api
-        self.risk = risk
-        self.config = config
-        self.db = db
-        self.symbols = symbol_list
+        super().__init__(api, risk, config, db, symbol_list)
         self.interval = 60  # Check every 60 seconds
 
     async def run(self):

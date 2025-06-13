@@ -3,15 +3,11 @@
 import asyncio
 import logging
 from indicators.technical_indicators import exponential_moving_average
+from strategies.base_strategy import BaseStrategy
 
-class ForexScalpingStrategy:
+class ForexScalpingStrategy(BaseStrategy):
     def __init__(self, api, risk, config, db, symbol_list):
-        self.api = api
-        self.risk = risk
-        self.config = config
-        self.db = db
-        self.symbols = symbol_list
-        self.price_history = {symbol: [] for symbol in symbol_list}
+        super().__init__(api, risk, config, db, symbol_list)
         self.interval = 5  # seconds
         self.ema_period = 9
 

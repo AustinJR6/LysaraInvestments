@@ -24,6 +24,9 @@ from views import (
     show_log_view,
     show_portfolio_table,
     show_sim_summary,
+    show_conviction_heatmap,
+    show_ai_thought_feed,
+    show_equity_curve,
 )
 from dashboard.utils import (
     load_control_flags,
@@ -33,8 +36,10 @@ from dashboard.utils import (
     get_trade_history,
     get_performance_metrics,
     get_equity,
+    get_equity_curve,
     get_log_lines,
     get_sentiment_data,
+    get_ai_thoughts,
     mock_trade_history,
     PortfolioManager,
 )
@@ -80,8 +85,9 @@ def main():
         st.sidebar.error("❌ LIVE MODE ACTIVE")
 
     # Sidebar controls
-    show_trading_controls(pm.sim_portfolio)
-    show_risk_controls()
+    if config.get("SHOW_MANUAL_TRADING_UI", False):
+        show_trading_controls(pm.sim_portfolio)
+        show_risk_controls()
 
     flags = load_control_flags()
     if flags:
@@ -97,8 +103,10 @@ def main():
             trade_history = get_trade_history()
             metrics = get_performance_metrics()
             equity = get_equity()
+            equity_curve_data = get_equity_curve()
             sentiment = get_sentiment_data()
             logs = get_log_lines()
+            ai_feed = get_ai_thoughts()
             real_holdings = pm.get_account_holdings()
             sim_data = pm.get_simulated_portfolio() if config.get("simulation_mode", True) else None
         except Exception as e:
@@ -107,8 +115,10 @@ def main():
             trade_history = []
             metrics = {}
             equity = 0.0
+            equity_curve_data = []
             sentiment = {}
             logs = []
+            ai_feed = []
             real_holdings = {"crypto": [], "stocks": [], "forex": []}
             sim_data = None
     last_updated = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
@@ -207,19 +217,29 @@ def main():
     tab_list = ["Crypto Chart", "Stocks Chart"]
     if forex_enabled:
         tab_list.append("Forex Chart")
-    tab_list.append("Logs")
+    tab_list.extend(["Equity Curve", "AI Feed", "Heatmap", "Logs"])
     log_tabs = st.tabs(tab_list)
-    with log_tabs[0]:
+    idx = 0
+    with log_tabs[idx]:
         show_crypto_view(mock_chart_data("crypto"))
-    with log_tabs[1]:
+    idx += 1
+    with log_tabs[idx]:
         show_stocks_view(mock_chart_data("stocks"))
+    idx += 1
     if forex_enabled:
-        with log_tabs[2]:
+        with log_tabs[idx]:
             show_forex_view(mock_chart_data("forex"))
-        log_idx = 3
-    else:
-        log_idx = 2
-    with log_tabs[log_idx]:
+        idx += 1
+    with log_tabs[idx]:
+        show_equity_curve(equity_curve_data)
+    idx += 1
+    with log_tabs[idx]:
+        show_ai_thought_feed(ai_feed)
+    idx += 1
+    with log_tabs[idx]:
+        show_conviction_heatmap(sentiment)
+    idx += 1
+    with log_tabs[idx]:
         show_log_view(logs)
 
     if sentiment:

@@ -39,6 +39,7 @@ class ConfigManager:
         self.base_config['ENABLE_AI_ASSET_DISCOVERY'] = os.getenv('ENABLE_AI_ASSET_DISCOVERY', 'false').lower() in ('true', '1', 'yes')
         self.base_config['FOREX_ENABLED'] = os.getenv('FOREX_ENABLED', 'false').lower() in ('true', '1', 'yes')
         self.base_config['LIVE_TRADING_ENABLED'] = os.getenv('LIVE_TRADING_ENABLED', 'true').lower() in ('true', '1', 'yes')
+        self.base_config['SHOW_MANUAL_TRADING_UI'] = os.getenv('SHOW_MANUAL_TRADING_UI', 'false').lower() in ('true', '1', 'yes')
         self.base_config['log_level'] = os.getenv('LOG_LEVEL', 'INFO')
         self.base_config['db_path'] = os.getenv('DB_PATH', 'trades.db')
         self.base_config['config_path'] = os.getenv('CONFIG_PATH', 'config.json')
@@ -52,9 +53,9 @@ class ConfigManager:
                 with open(path, 'r') as f:
                     self.base_config.update(json.load(f))
             except json.JSONDecodeError:
-                print(f"Error: Could not decode {path}.")
+                logging.error(f"Error: Could not decode {path}.")
         else:
-            print(f"Warning: {path} not found. Using default settings.")
+            logging.warning(f"Warning: {path} not found. Using default settings.")
 
     def load_asset_specific_configs(self):
         self.base_config['crypto_settings'] = self._load_json('config/settings_crypto.json')
@@ -66,5 +67,5 @@ class ConfigManager:
             with open(filepath, 'r') as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
-            print(f"Warning: Failed to load or parse {filepath}. Returning empty dict.")
+            logging.warning(f"Failed to load or parse {filepath}. Returning empty dict.")
             return {}
