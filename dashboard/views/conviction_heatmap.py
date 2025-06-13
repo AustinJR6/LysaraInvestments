@@ -1,6 +1,12 @@
 import streamlit as st
 import pandas as pd
 
+try:  # optional styling dependency
+    import matplotlib  # noqa: F401
+    HAS_MPL = True
+except Exception:  # ImportError or other issue
+    HAS_MPL = False
+
 
 def show_conviction_heatmap(sentiment: dict):
     """Render a simple heatmap of sentiment scores per asset."""
@@ -14,5 +20,8 @@ def show_conviction_heatmap(sentiment: dict):
         "score": [v.get("score", 0.0) for v in cp.values()],
     }
     df = pd.DataFrame(data).set_index("asset")
-    styled = df.style.background_gradient(cmap="RdYlGn", vmin=-1, vmax=1)
-    st.dataframe(styled, height=300)
+    if HAS_MPL:
+        styled = df.style.background_gradient(cmap="RdYlGn", vmin=-1, vmax=1)
+        st.dataframe(styled, height=300)
+    else:
+        st.dataframe(df, height=300)
