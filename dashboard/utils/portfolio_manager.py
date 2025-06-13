@@ -74,11 +74,11 @@ class PortfolioManager:
                 logging.error(f"Failed to fetch stock holdings: {e}")
 
         # Placeholder for forex holdings
-        if api_keys.get("oanda") and api_keys.get("oanda_account"):
+        if self.config.get("FOREX_ENABLED", False) and api_keys.get("oanda") and api_keys.get("oanda_account_id"):
             try:
                 api = ForexAPI(
                     api_key=api_keys.get("oanda"),
-                    account_id=api_keys.get("oanda_account"),
+                    account_id=api_keys.get("oanda_account_id"),
                     simulation_mode=False,
                 )
                 info = await api.get_account_info()
@@ -161,12 +161,12 @@ class PortfolioManager:
         """Fetch forex account balance via OANDA."""
         holdings: List[Dict] = []
         api_keys = self.config.get("api_keys", {})
-        if not (api_keys.get("oanda") and api_keys.get("oanda_account")):
+        if not (api_keys.get("oanda") and api_keys.get("oanda_account_id")):
             return holdings
         try:
             api = ForexAPI(
                 api_key=api_keys.get("oanda"),
-                account_id=api_keys.get("oanda_account"),
+                account_id=api_keys.get("oanda_account_id"),
                 simulation_mode=False,
             )
             info = await api.get_account_info()
@@ -189,7 +189,7 @@ class PortfolioManager:
         """Fetch holdings for all asset classes separately."""
         crypto = await self._fetch_crypto_holdings()
         stocks = await self._fetch_stock_holdings()
-        forex = await self._fetch_forex_holdings()
+        forex = await self._fetch_forex_holdings() if self.config.get("FOREX_ENABLED", False) else []
         return {"crypto": crypto, "stocks": stocks, "forex": forex}
 
     def get_live_holdings(self) -> List[Dict]:

@@ -65,6 +65,7 @@ def main():
 
     config = ConfigManager().load_config()
     pm = PortfolioManager(config)
+    forex_enabled = config.get("FOREX_ENABLED", False)
 
     mode = "LIVE" if not config.get("simulation_mode", True) else "SIM"
     banner_color = "red" if mode == "LIVE" else "green"
@@ -155,7 +156,10 @@ def main():
         st.caption(f"Last Updated: {last_updated} UTC")
 
     with portfolio_tabs[1]:
-        real_tabs = st.tabs(["Crypto", "Stocks", "Forex"])
+        tabs = ["Crypto", "Stocks"]
+        if forex_enabled:
+            tabs.append("Forex")
+        real_tabs = st.tabs(tabs)
         with real_tabs[0]:
             crypto_positions = real_holdings.get("crypto", [])
             if crypto_positions:
@@ -168,17 +172,21 @@ def main():
                 show_portfolio_table(stock_positions, "Stock Account Holdings")
             else:
                 st.info("No real holdings available.")
-        with real_tabs[2]:
-            forex_positions = real_holdings.get("forex", [])
-            if forex_positions:
-                show_portfolio_table(forex_positions, "Forex Account Holdings")
-            else:
-                st.info("No real holdings available.")
+        if forex_enabled and len(real_tabs) > 2:
+            with real_tabs[2]:
+                forex_positions = real_holdings.get("forex", [])
+                if forex_positions:
+                    show_portfolio_table(forex_positions, "Forex Account Holdings")
+                else:
+                    st.info("No real holdings available.")
         st.caption(f"Last Updated: {last_updated} UTC")
 
     with portfolio_tabs[2]:
         last_trades = get_last_trade_per_market()
-        for market_label in ["crypto", "stocks", "forex"]:
+        markets = ["crypto", "stocks"]
+        if forex_enabled:
+            markets.append("forex")
+        for market_label in markets:
             trade = last_trades.get(market_label)
             st.subheader(market_label.capitalize())
             if trade:
@@ -196,14 +204,22 @@ def main():
 
     st.divider()
 
-    log_tabs = st.tabs(["Crypto Chart", "Stocks Chart", "Forex Chart", "Logs"])
+    tab_list = ["Crypto Chart", "Stocks Chart"]
+    if forex_enabled:
+        tab_list.append("Forex Chart")
+    tab_list.append("Logs")
+    log_tabs = st.tabs(tab_list)
     with log_tabs[0]:
         show_crypto_view(mock_chart_data("crypto"))
     with log_tabs[1]:
         show_stocks_view(mock_chart_data("stocks"))
-    with log_tabs[2]:
-        show_forex_view(mock_chart_data("forex"))
-    with log_tabs[3]:
+    if forex_enabled:
+        with log_tabs[2]:
+            show_forex_view(mock_chart_data("forex"))
+        log_idx = 3
+    else:
+        log_idx = 2
+    with log_tabs[log_idx]:
         show_log_view(logs)
 
     if sentiment:

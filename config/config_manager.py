@@ -30,11 +30,14 @@ class ConfigManager:
             'cryptopanic': os.getenv('CRYPTOPANIC_KEY'),
             'slack_webhook': os.getenv('SLACK_WEBHOOK_URL'),
             'openai': os.getenv('OPENAI_API_KEY'),
+            'oanda': os.getenv('OANDA_API_KEY'),
+            'oanda_account_id': os.getenv('OANDA_ACCOUNT_ID'),
         }
         self.base_config['simulation_mode'] = os.getenv('SIMULATION_MODE', 'True').lower() in ('true', '1', 'yes')
         self.base_config['ENABLE_STOCK_TRADING'] = os.getenv('ENABLE_STOCK_TRADING', 'false').lower() in ('true', '1', 'yes')
         self.base_config['ENABLE_AI_STRATEGY'] = os.getenv('ENABLE_AI_STRATEGY', 'false').lower() in ('true', '1', 'yes')
         self.base_config['ENABLE_AI_ASSET_DISCOVERY'] = os.getenv('ENABLE_AI_ASSET_DISCOVERY', 'false').lower() in ('true', '1', 'yes')
+        self.base_config['FOREX_ENABLED'] = os.getenv('FOREX_ENABLED', 'false').lower() in ('true', '1', 'yes')
         self.base_config['LIVE_TRADING_ENABLED'] = os.getenv('LIVE_TRADING_ENABLED', 'true').lower() in ('true', '1', 'yes')
         self.base_config['log_level'] = os.getenv('LOG_LEVEL', 'INFO')
         self.base_config['db_path'] = os.getenv('DB_PATH', 'trades.db')

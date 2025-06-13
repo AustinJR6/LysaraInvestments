@@ -16,9 +16,9 @@ def stream_output(proc: subprocess.Popen, label: str, buffer: List[str]):
             if not line:
                 break
             buffer.append(line)
-            print(f"[{label}] {line}", end='')
+            logging.info(f"[{label}] {line.strip()}")
     except Exception as exc:
-        print(f"[!] Error reading {label} output: {exc}")
+        logging.error(f"Error reading {label} output: {exc}")
 
 
 def start_process(cmd: List[str], label: str):
@@ -34,10 +34,10 @@ def start_process(cmd: List[str], label: str):
         )
         thread = threading.Thread(target=stream_output, args=(proc, label, buffer), daemon=True)
         thread.start()
-        print(f"[✓] {label} launched successfully.")
+        logging.info(f"{label} launched successfully.")
         return proc, buffer
     except FileNotFoundError as exc:
-        print(f"[!] Failed to start {label}: {exc}")
+        logging.error(f"Failed to start {label}: {exc}")
         return None, buffer
 
 
@@ -60,7 +60,7 @@ def main():
     dash_proc, dash_buffer = start_process(["streamlit", "run", "dashboard/app.py"], "Dashboard")
 
     if dash_proc:
-        print("[✓] Dashboard running at http://localhost:8501")
+        logging.info("Dashboard running at http://localhost:8501")
 
     try:
         while True:
@@ -68,15 +68,15 @@ def main():
             if bot_proc and bot_proc.poll() is not None:
                 err = ''.join(bot_buffer[-10:]).strip()
                 msg = f"[!] Bot crashed with error: {err}" if err else f"[!] Bot exited with code {bot_proc.returncode}"
-                print(msg)
+                logging.error(msg)
                 break
             if dash_proc and dash_proc.poll() is not None:
                 err = ''.join(dash_buffer[-10:]).strip()
                 msg = f"[!] Dashboard crashed with error: {err}" if err else f"[!] Dashboard exited with code {dash_proc.returncode}"
-                print(msg)
+                logging.error(msg)
                 break
     except KeyboardInterrupt:
-        print("\n[!] Interrupt received. Shutting down...")
+        logging.info("Interrupt received. Shutting down...")
     finally:
         for proc, label in [(bot_proc, "Bot"), (dash_proc, "Dashboard")]:
             if proc and proc.poll() is None:
@@ -85,7 +85,7 @@ def main():
                     proc.wait(timeout=5)
                 except subprocess.TimeoutExpired:
                     proc.kill()
-                print(f"[✓] {label} terminated.")
+                logging.info(f"{label} terminated.")
 
 
 if __name__ == "__main__":
