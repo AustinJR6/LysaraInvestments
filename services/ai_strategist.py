@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import re
 from pathlib import Path
 from datetime import datetime
 import asyncio
@@ -42,6 +43,14 @@ async def _call_openai(messages: list[dict]) -> str:
         return resp["choices"][0]["message"]["content"].strip()
 
 
+def _extract_json(text: str) -> dict:
+    """Return the first JSON object found in a string."""
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if not match:
+        raise ValueError("No JSON object found")
+    return json.loads(match.group(0))
+
+
 def _log_decision(context: dict, decision: dict) -> None:
     """Append AI decisions to log file."""
     try:
@@ -75,7 +84,7 @@ async def get_ai_trade_decision(context: dict) -> dict:
     for attempt in range(3):
         try:
             text = await _call_openai(messages)
-            decision = json.loads(text)
+            decision = _extract_json(text)
             _log_decision(context, decision)
             return decision
         except Exception as e:
@@ -172,7 +181,7 @@ async def ai_discover_assets(base_symbols: list[str] | None = None) -> list[str]
 
     try:
         text = await _call_openai(messages)
-        data = json.loads(text)
+        data = _extract_json(text)
         symbols = [s.strip().upper() for s in data.get("symbols", [])]
         reason = data.get("reason", "")
         symbols = [s for s in symbols if s and s not in base_symbols]
