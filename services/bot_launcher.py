@@ -14,6 +14,7 @@ from data.market_data_alpaca import start_stock_ws_feed
 from db.db_manager import DatabaseManager
 from services.background_tasks import BackgroundTasks
 from services.sim_portfolio import SimulatedPortfolio
+from services.heartbeat import heartbeat
 
 
 class BotLauncher:
@@ -33,6 +34,7 @@ class BotLauncher:
 
     def start_all_bots(self):
         asyncio.create_task(self.bg_tasks.run_sentiment_loop())
+        asyncio.create_task(heartbeat())
 
         if self.config.get("ENABLE_CRYPTO_TRADING", True):
             asyncio.create_task(self.start_crypto_bots())
@@ -40,8 +42,12 @@ class BotLauncher:
         if self.config.get("ENABLE_STOCK_TRADING", False):
             asyncio.create_task(self.start_stock_bots())
 
-        if self.config.get("ENABLE_FOREX_TRADING", False):
-            asyncio.create_task(self.start_forex_bots())
+        if self.config.get("FOREX_ENABLED", False):
+            api_keys = self.config.get("api_keys", {})
+            if api_keys.get("oanda") and api_keys.get("oanda_account_id"):
+                asyncio.create_task(self.start_forex_bots())
+            else:
+                logging.warning("FOREX_ENABLED but OANDA credentials missing. Forex bots disabled.")
 
     async def start_crypto_bots(self):
         logging.info(" Starting crypto bots...")

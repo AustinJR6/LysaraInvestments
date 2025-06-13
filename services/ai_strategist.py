@@ -26,7 +26,7 @@ async def _call_openai(messages: list[dict]) -> str:
     try:
         resp = await asyncio.to_thread(
             openai.chat.completions.create,
-            model="gpt-3.5-turbo",
+            model="gpt-4o",
             messages=messages,
             temperature=0.2,
         )
@@ -35,7 +35,7 @@ async def _call_openai(messages: list[dict]) -> str:
         # Fallback for older openai<1.0
         resp = await asyncio.to_thread(
             openai.ChatCompletion.create,
-            model="gpt-3.5-turbo",
+            model="gpt-4o",
             messages=messages,
             temperature=0.2,
         )
