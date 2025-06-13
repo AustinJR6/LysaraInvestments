@@ -2,6 +2,7 @@ aiohttp
 pandas
 numpy
 streamlit
+matplotlib
 textblob
 websockets
 python-dotenv
