@@ -182,3 +182,12 @@ async def ai_discover_assets(base_symbols: list[str] | None = None) -> list[str]
     except Exception as e:
         logging.error(f"AI asset discovery failed: {e}")
         return []
+
+
+async def get_conviction_score(context: dict) -> float:
+    """Return a conviction score between 0 and 1 using GPT if available."""
+    try:
+        decision = await get_ai_trade_decision(context)
+        return float(decision.get("confidence", 0.5))
+    except Exception:
+        return 0.5
