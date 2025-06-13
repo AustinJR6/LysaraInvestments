@@ -8,4 +8,5 @@ python-dotenv
 openai>=1.0
 pytrends
 coinbase-advanced-py
-coinbase-advanced-trade
+# Optional new SDK name; fallback handled in code
+coinbase-advancedtrade-python

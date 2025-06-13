@@ -7,7 +7,10 @@ import logging
 import uuid
 from typing import Any, Dict, Optional
 
-from coinbase_advanced_trade import AdvancedTradeClient
+try:  # Preferred modern SDK
+    from coinbase_advanced_trade import AdvancedTradeClient
+except ModuleNotFoundError:  # Fall back to official coinbase-advanced-py SDK
+    from coinbase.rest import RESTClient as AdvancedTradeClient
 
 from utils.guardrails import log_live_trade
 
