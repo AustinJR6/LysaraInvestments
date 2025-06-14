@@ -11,3 +11,9 @@ pytrends
 coinbase-advanced-py
 # Optional new SDK name; fallback handled in code
 coinbase-advancedtrade-python
+praw
+snscrape
+newsapi-python
+gnews
+transformers
+torch
