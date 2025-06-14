@@ -67,5 +67,3 @@ class BackgroundTasks:
 
     def stop(self):
         self._running = False
-
-        self._running = False

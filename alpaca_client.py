@@ -6,6 +6,7 @@ import asyncio
 from typing import Dict, Any
 
 import requests
+from urllib.parse import urljoin
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -25,7 +26,7 @@ def _headers() -> Dict[str, str]:
 
 def _request(method: str, path: str, *, live: bool = False, **kwargs) -> Dict[str, Any]:
     base_url = LIVE_URL if live else PAPER_URL
-    url = f"{base_url.rstrip('/')}{path}"
+    url = urljoin(base_url.rstrip('/') + '/', path.lstrip('/'))
     for attempt in range(1, 4):
         try:
             resp = requests.request(method, url, headers=_headers(), timeout=10, **kwargs)

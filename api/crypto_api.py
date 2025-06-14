@@ -24,3 +24,7 @@ class CryptoAPI(CoinbaseClient):
             config=config,
             trade_cooldown=trade_cooldown,
         )
+
+    async def fetch_holdings(self) -> dict:
+        """Alias for ``get_holdings`` for backward compatibility."""
+        return await self.get_holdings()
