@@ -27,6 +27,7 @@ from views import (
     show_conviction_heatmap,
     show_ai_thought_feed,
     show_equity_curve,
+    show_agent_status,
 )
 from dashboard.utils import (
     load_control_flags,
@@ -40,6 +41,7 @@ from dashboard.utils import (
     get_log_lines,
     get_sentiment_data,
     get_ai_thoughts,
+    get_last_agent_decision,
     mock_trade_history,
     PortfolioManager,
 )
@@ -93,6 +95,8 @@ def main():
     if flags:
         st.sidebar.markdown("### ⚙️ Active Flags")
         st.sidebar.json(flags)
+
+    auto_mode = st.sidebar.checkbox("Autonomous Mode", value=True)
 
     st.divider()
 
@@ -149,6 +153,9 @@ def main():
     else:
         st.markdown("### AI Strategist Last Decision")
         st.write("No decision logged yet.")
+
+    agent_info = get_last_agent_decision()
+    show_agent_status(agent_info, auto_mode)
 
     portfolio_tabs = st.tabs([
         "Simulated Portfolio",

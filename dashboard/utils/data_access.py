@@ -193,3 +193,25 @@ def mock_trade_history(count: int = 10) -> List[Dict]:
             }
         )
     return trades
+
+
+def get_last_agent_decision(log_path: str = "logs/agent_decisions.log") -> Dict:
+    """Return the most recent agent decision."""
+    path = Path(log_path)
+    if not path.is_file():
+        return {}
+    try:
+        lines = path.read_text().strip().splitlines()
+        if not lines:
+            return {}
+        last = lines[-1]
+        ts, rest = last.split(" ", 1)
+        ctx = rest.split("context=")[1].split(" decision=")[0]
+        dec = rest.split("decision=")[1]
+        return {
+            "timestamp": ts,
+            "context": json.loads(ctx),
+            "decision": json.loads(dec),
+        }
+    except Exception:
+        return {}
