@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 import uuid
 from typing import Any, Dict, Optional
 
@@ -48,19 +47,10 @@ class CoinbaseClient:
         self._mock_holdings: Dict[str, float] = {}
 
         self.client = None
-        if not simulation_mode:
-            # Allow api_secret to be provided as a path to a PEM file
-            secret = api_secret
-            if secret and '\n' not in secret and os.path.isfile(secret):
-                try:
-                    with open(secret, 'r') as f:
-                        secret = f.read()
-                except Exception as e:  # pragma: no cover - failure logged below
-                    logging.error(f"Failed to read Coinbase API secret file: {e}")
-            if BrokerAPI:
-                self.client = BrokerAPI(api_key=api_key, api_secret=secret)
-            else:  # pragma: no cover - missing AgentKit
-                logging.warning("BrokerAPI unavailable; Coinbase client disabled")
+        if not simulation_mode and BrokerAPI:
+            self.client = BrokerAPI(api_key=api_key, api_secret=api_secret)
+        elif not simulation_mode:
+            logging.warning("BrokerAPI unavailable; Coinbase client disabled")
 
     async def _run(self, func, *args, **kwargs):
         return await asyncio.to_thread(func, *args, **kwargs)
