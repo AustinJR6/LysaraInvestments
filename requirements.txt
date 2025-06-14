@@ -17,3 +17,9 @@ newsapi-python
 gnews
 transformers
 torch
+ta
+xgboost
+spacy
+google-trends-api
+youtube-transcript-api
+whisper
