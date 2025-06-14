@@ -1,4 +1,4 @@
-"""Async Coinbase client using the Advanced Trade SDK."""
+"""Async Coinbase client using Coinbase AgentKit BrokerAPI."""
 
 from __future__ import annotations
 
@@ -8,16 +8,27 @@ import os
 import uuid
 from typing import Any, Dict, Optional
 
-try:  # Preferred modern SDK
-    from coinbase_advanced_trade import AdvancedTradeClient
-except ModuleNotFoundError:  # Fall back to official coinbase-advanced-py SDK
-    from coinbase.rest import RESTClient as AdvancedTradeClient
+try:
+    from coinbase_agentkit.broker import BrokerAPI
+except Exception:  # pragma: no cover - fallback if AgentKit missing
+    BrokerAPI = None
+    try:
+        from coinbase_advanced_trade import AdvancedTradeClient as BrokerAPI
+    except ModuleNotFoundError:  # pragma: no cover
+        try:
+            from coinbase.rest import RESTClient as BrokerAPI
+        except ModuleNotFoundError:  # pragma: no cover - final fallback
+            class BrokerAPI:
+                """Minimal stub for tests when no SDKs are installed."""
+
+                def __init__(self, *_, **__):
+                    pass
 
 from utils.guardrails import log_live_trade
 
 
 class CoinbaseClient:
-    """Thin async wrapper around the Coinbase Advanced Trade SDK."""
+    """Thin async wrapper around Coinbase AgentKit's BrokerAPI."""
 
     def __init__(
         self,
@@ -46,10 +57,33 @@ class CoinbaseClient:
                         secret = f.read()
                 except Exception as e:  # pragma: no cover - failure logged below
                     logging.error(f"Failed to read Coinbase API secret file: {e}")
-            self.client = AdvancedTradeClient(api_key=api_key, api_secret=secret)
+            if BrokerAPI:
+                self.client = BrokerAPI(api_key=api_key, api_secret=secret)
+            else:  # pragma: no cover - missing AgentKit
+                logging.warning("BrokerAPI unavailable; Coinbase client disabled")
 
     async def _run(self, func, *args, **kwargs):
         return await asyncio.to_thread(func, *args, **kwargs)
+
+    async def get_accounts(self) -> Any:
+        """Return raw account data from Coinbase."""
+        if self.simulation_mode or not self.client:
+            return []
+        return await self._run(self.client.get_accounts)
+
+    async def get_balances(self) -> Dict[str, float]:
+        """Return currency balances as a dict."""
+        accounts = await self.get_accounts()
+        holdings: Dict[str, float] = {}
+        for acct in getattr(accounts, "accounts", []):
+            cur = getattr(acct, "currency", None)
+            bal = getattr(acct, "available_balance", None)
+            if bal is not None:
+                val = float(getattr(bal, "value", 0) or 0)
+                if cur and val:
+                    holdings[cur] = val
+        logging.debug(f"Balances fetched: {holdings}")
+        return holdings
 
     # ------------------------------------------------------------------
     # Account and holdings
@@ -65,13 +99,14 @@ class CoinbaseClient:
             return {"currency": "USD", "balance": self._mock_equity}
         for attempt in range(1, 4):
             try:
-                data = await self._run(self.client.get_accounts)
+                accounts = await self.get_accounts()
                 usd_balance = 0.0
-                for acct in getattr(data, "accounts", []):
+                for acct in getattr(accounts, "accounts", []):
                     if getattr(acct, "currency", "") == "USD" and acct.available_balance:
                         bal = getattr(acct.available_balance, "value", 0) or 0
                         usd_balance = float(bal)
                         break
+                logging.debug(f"Account info response: {usd_balance}")
                 return {"currency": "USD", "balance": usd_balance}
             except Exception as e:
                 logging.error(f"fetch_account_info failed (attempt {attempt}): {e}")
@@ -84,15 +119,7 @@ class CoinbaseClient:
             return self._mock_holdings
         for attempt in range(1, 4):
             try:
-                data = await self._run(self.client.get_accounts)
-                holdings: Dict[str, float] = {}
-                for acct in getattr(data, "accounts", []):
-                    cur = getattr(acct, "currency", None)
-                    bal = getattr(acct, "available_balance", None)
-                    if bal is not None:
-                        bal_val = float(getattr(bal, "value", 0) or 0)
-                        if cur and bal_val:
-                            holdings[cur] = bal_val
+                holdings = await self.get_balances()
                 return holdings
             except Exception as e:
                 logging.error(f"get_holdings failed (attempt {attempt}): {e}")
@@ -129,6 +156,7 @@ class CoinbaseClient:
                     result = await self._run(
                         self.client.market_order_sell, client_id, symbol, base_size=str(qty)
                     )
+                logging.debug(f"Order response: {result}")
                 price = (await self.fetch_market_price(symbol)).get("price", 0.0)
                 await log_live_trade(
                     symbol,
