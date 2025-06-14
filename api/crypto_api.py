@@ -28,3 +28,7 @@ class CryptoAPI(CoinbaseClient):
     async def fetch_holdings(self) -> dict:
         """Alias for ``get_holdings`` for backward compatibility."""
         return await self.get_holdings()
+
+    async def close(self) -> None:
+        """Alias for ``close`` to avoid attribute errors."""
+        await super().close()

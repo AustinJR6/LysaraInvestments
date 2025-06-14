@@ -25,6 +25,15 @@ Create a `.env` file based on `.env.example` and populate your API keys. At a mi
 set `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` to enable live or paper stock trading
 through Alpaca.
 
+For Coinbase Advanced Trade, the `COINBASE_SECRET_KEY` value should contain the
+**contents** of your PEM private key. If you store it in a file, supply the file
+path and the application will load it automatically. A common error is providing
+the wrong format which results in `Unable to load PEM file` messages.
+
+For Alpaca, `ALPACA_BASE_URL` should be the root URL such as
+`https://paper-api.alpaca.markets` (without `/v2`). Including `/v2` will produce
+404 errors like `.../v2/v2/positions`.
+
 To use the optional AI strategist module, set `OPENAI_API_KEY` and enable it with
 `ENABLE_AI_STRATEGY=true`.  The application now loads `.env` automatically so the
 key is picked up even when modules are imported before the configuration stage.

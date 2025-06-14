@@ -9,5 +9,10 @@ class CryptoAPITest(unittest.IsolatedAsyncioTestCase):
         holdings = await api.fetch_holdings()
         self.assertEqual(holdings, {"BTC": 1.0})
 
+    async def test_close_exists(self):
+        api = CryptoAPI(api_key="dummy", simulation_mode=True)
+        # Should not raise even though no real session exists
+        await api.close()
+
 if __name__ == "__main__":
     unittest.main()
