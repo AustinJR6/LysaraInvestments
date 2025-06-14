@@ -6,12 +6,16 @@ __pycache__/
 
 # Virtual Envs
 .env
+.env.local
+.env.*
 .venv/
 venv/
 
 # Logs
 logs/
 *.log
+*.pem
+secrets/
 
 # System
 .DS_Store
