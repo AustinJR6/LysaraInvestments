@@ -26,7 +26,6 @@ async def gather_market_snapshot(config: Dict, symbol: str) -> MarketSnapshot:
         api = CryptoAPI(
             api_key=api_keys.get("coinbase"),
             secret_key=api_keys.get("coinbase_secret", ""),
-            passphrase=api_keys.get("coinbase_passphrase", ""),
             simulation_mode=True,
             config=config,
         )

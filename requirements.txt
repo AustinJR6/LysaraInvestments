@@ -11,6 +11,7 @@ pytrends
 coinbase-advanced-py
 # Optional new SDK name; fallback handled in code
 coinbase-advancedtrade-python
+coinbase-agentkit==0.6.0
 praw
 snscrape
 newsapi-python

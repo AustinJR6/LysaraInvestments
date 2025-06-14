@@ -21,7 +21,7 @@ async def start_crypto_market_feed(symbols: list[str], on_message=handle_market_
     """
     Launches a Coinbase WebSocket connection for real-time ticker data.
     """
-    uri = "wss://ws-feed.exchange.coinbase.com"
+    uri = "wss://advanced-trade-ws.coinbase.com"
     subscribe_msg = {
         "type": "subscribe",
         "product_ids": symbols,

@@ -10,7 +10,6 @@ class CryptoAPI(CoinbaseClient):
         self,
         api_key: str,
         secret_key: str = "",
-        passphrase: str | None = None,
         simulation_mode: bool = True,
         portfolio=None,
         config: dict | None = None,
