@@ -23,3 +23,5 @@ spacy
 google-trends-api
 youtube-transcript-api
 whisper
+apscheduler
+pyyaml

@@ -8,6 +8,7 @@ from .data_access import (
     get_equity_curve,
     get_log_lines,
     get_ai_thoughts,
+    get_last_agent_decision,
     get_sentiment_data,
     mock_trade_history,
 )
@@ -23,6 +24,7 @@ __all__ = [
     "get_equity_curve",
     "get_log_lines",
     "get_ai_thoughts",
+    "get_last_agent_decision",
     "get_sentiment_data",
     "mock_trade_history",
     "PortfolioManager",

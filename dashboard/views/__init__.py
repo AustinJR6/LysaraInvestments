@@ -8,6 +8,7 @@ from .portfolio_view import show_portfolio_table, show_sim_summary
 from .conviction_heatmap import show_conviction_heatmap
 from .ai_thought_view import show_ai_thought_feed
 from .equity_curve_view import show_equity_curve
+from .agent_status import show_agent_status
 
 __all__ = [
     "show_crypto_view",
@@ -21,4 +22,5 @@ __all__ = [
     "show_conviction_heatmap",
     "show_ai_thought_feed",
     "show_equity_curve",
+    "show_agent_status",
 ]
