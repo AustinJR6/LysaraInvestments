@@ -7,6 +7,8 @@ from typing import Dict, Any
 
 from api.crypto_api import CryptoAPI
 from risk.risk_manager import RiskManager
+from .market_snapshot import MarketSnapshot
+from .safety import is_safe_to_trade
 
 
 class TradeExecutor:
@@ -27,7 +29,7 @@ class TradeExecutor:
         )
         self.risk = RiskManager(self.api, config.get("crypto_settings", {}))
 
-    async def execute(self, decision: Dict[str, Any], symbol: str):
+    async def execute(self, snapshot: MarketSnapshot, decision: Dict[str, Any]):
         """Execute the trade if allowed."""
         action = decision.get("action", "HOLD").upper()
         if action not in {"BUY", "SELL"}:
@@ -40,11 +42,19 @@ class TradeExecutor:
             return None
 
         await self.risk.update_equity()
-        price_data = await self.api.fetch_market_price(symbol)
-        price = float(price_data.get("price", 0))
+        balance = self.risk.last_equity or 0
+        start = self.risk.start_equity or balance
+        recent_drawdown = 0.0
+        if start:
+            recent_drawdown = (start - balance) / start
+        if not is_safe_to_trade(balance, recent_drawdown, decision.get("confidence", 0)):
+            logging.warning("Trade blocked by safety rules")
+            return None
+
+        price = snapshot.price
         qty = self.risk.get_position_size(price)
         side = "buy" if action == "BUY" else "sell"
-        logging.info(f"Executing {side} {qty} {symbol} @ {price}")
-        result = await self.api.place_order(symbol, qty, side, confidence=decision.get("confidence"))
+        logging.info(f"Executing {side} {qty} {snapshot.ticker} @ {price}")
+        result = await self.api.place_order(snapshot.ticker, qty, side, confidence=decision.get("confidence"))
         return result
 

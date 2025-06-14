@@ -3,10 +3,28 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Dict, Any
 from datetime import datetime
 import logging
+
+LOG_PATH = "logs/agent_history.json"
+
+def log_trade_decision(snapshot, decision: dict):
+    log_entry = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "ticker": snapshot.ticker,
+        "price": snapshot.price,
+        "sentiment": snapshot.sentiment,
+        "technicals": snapshot.technicals,
+        "volatility": snapshot.volatility,
+        "decision": decision,
+    }
+    if not os.path.exists("logs"):
+        os.makedirs("logs")
+    with open(LOG_PATH, "a") as f:
+        f.write(json.dumps(log_entry) + "\n")
 
 from db.db_manager import DatabaseManager
 

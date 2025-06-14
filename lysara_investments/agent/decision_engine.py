@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import Dict, Any
 import logging
 
-from .perception import MarketSnapshot
+from .market_snapshot import MarketSnapshot
+from .personality import explain_decision
 
 
 def analyze_sentiment(snapshot: MarketSnapshot) -> float:
@@ -39,6 +40,13 @@ def make_trade_decision(snapshot: MarketSnapshot, config: Dict) -> Dict[str, Any
         "confidence": round(min(confidence, 1.0), 2),
         "rationale": f"Sentiment score {sentiment_score:.2f}",
     }
+
+    decision["explanation"] = explain_decision(
+        snapshot.ticker,
+        decision["action"],
+        decision["rationale"],
+        decision["confidence"],
+    )
 
     if decision["confidence"] < threshold:
         logging.info("Decision confidence below threshold")

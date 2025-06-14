@@ -8,6 +8,14 @@ from typing import Dict
 from db.db_manager import DatabaseManager
 
 
+def is_safe_to_trade(balance, recent_drawdown, confidence, max_drawdown=0.15, min_confidence=0.7):
+    if recent_drawdown >= max_drawdown:
+        return False
+    if confidence < min_confidence:
+        return False
+    return True
+
+
 class SafetyMonitor:
     """Monitor trading activity and disable when limits hit."""
 
@@ -54,4 +62,5 @@ class SafetyMonitor:
             return False
         self.check_drawdown()
         return not self.disabled
+
 
