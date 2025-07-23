@@ -26,6 +26,8 @@ class AgentRunTest(unittest.TestCase):
             decision["confidence"],
         )
         self.assertEqual(decision["explanation"], explanation)
+        self.assertIn("order", decision)
+        self.assertEqual(decision["order"]["symbol"], "TEST")
         log_trade_decision(snapshot, decision)
         self.assertTrue(os.path.exists("logs/agent_history.json"))
 

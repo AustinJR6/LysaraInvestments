@@ -38,6 +38,7 @@ class ConfigManager:
         self.base_config['ENABLE_STOCK_TRADING'] = os.getenv('ENABLE_STOCK_TRADING', 'false').lower() in ('true', '1', 'yes')
         self.base_config['ENABLE_AI_STRATEGY'] = os.getenv('ENABLE_AI_STRATEGY', 'false').lower() in ('true', '1', 'yes')
         self.base_config['ENABLE_AI_ASSET_DISCOVERY'] = os.getenv('ENABLE_AI_ASSET_DISCOVERY', 'false').lower() in ('true', '1', 'yes')
+        self.base_config['ENABLE_AI_TRADE_EXECUTION'] = os.getenv('ENABLE_AI_TRADE_EXECUTION', 'false').lower() in ('true', '1', 'yes')
         self.base_config['FOREX_ENABLED'] = os.getenv('FOREX_ENABLED', 'false').lower() in ('true', '1', 'yes')
         self.base_config['LIVE_TRADING_ENABLED'] = os.getenv('LIVE_TRADING_ENABLED', 'true').lower() in ('true', '1', 'yes')
         self.base_config['SHOW_MANUAL_TRADING_UI'] = os.getenv('SHOW_MANUAL_TRADING_UI', 'false').lower() in ('true', '1', 'yes')

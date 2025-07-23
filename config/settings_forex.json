@@ -13,5 +13,15 @@
   "risk_per_trade": 0.01,
   "max_drawdown": 0.15,
   "max_daily_loss": -300,
-  "atr_period": 14
+  "atr_period": 14,
+  "strategies": [
+    {
+      "type": "rsi_trend",
+      "trade_symbols": ["EUR_USD", "GBP_USD"]
+    },
+    {
+      "type": "rsi_trend",
+      "trade_symbols": ["USD_JPY"]
+    }
+  ]
 }

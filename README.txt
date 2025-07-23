@@ -46,6 +46,10 @@ To let the bot automatically suggest a few trending symbols each day, set
 of your preferred `TRADE_SYMBOLS` which will remain intact while any AI picked
 symbols are added on top.
 
+Enable fully automated trading on these AI suggestions with
+`ENABLE_AI_TRADE_EXECUTION=true`.  When disabled, the bot will only log
+recommendations without placing real or simulated orders.
+
 Set `FOREX_ENABLED=true` and provide `OANDA_API_KEY` and `OANDA_ACCOUNT_ID`
 if you want to enable forex trading. When not set, all forex related features
 in the dashboard and launcher are hidden.

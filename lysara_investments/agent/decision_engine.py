@@ -145,6 +145,15 @@ class DecisionEngine:
         decision.update(self._assess_risk(action, snapshot.price))
         self._apply_external_ai(decision, inputs.external_ai)
 
+        decision["order"] = {
+            "market": self.config.get("market", "crypto"),
+            "symbol": snapshot.ticker,
+            "side": decision["action"].lower(),
+            "qty": decision.get("position_size", 0.0),
+            "price": snapshot.price,
+            "confidence": decision["confidence"],
+        }
+
         decision["explanation"] = explain_decision(
             snapshot.ticker,
             decision["action"],
