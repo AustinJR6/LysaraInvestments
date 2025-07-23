@@ -43,11 +43,11 @@ class MeanReversionStrategy(BaseStrategy):
             return
 
         order = await self.api.place_order(
-            product_id=symbol,
+            symbol=symbol,
             side=side,
-            size=qty,
+            qty=qty,
             price=price,
-            order_type="market",
+            order_type="MARKET",
             confidence=0.0,
         )
 

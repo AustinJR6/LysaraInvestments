@@ -54,12 +54,12 @@ class PairsTradingStrategy(BaseStrategy):
 
         if direction == "long":
             # Buy 1, Sell 2
-            await self.api.place_order(product_id=self.pair[0], side="buy", size=qty_1, price=price_1, confidence=0.0)
-            await self.api.place_order(product_id=self.pair[1], side="sell", size=qty_2, price=price_2, confidence=0.0)
+            await self.api.place_order(symbol=self.pair[0], side="buy", qty=qty_1, price=price_1, order_type="MARKET", confidence=0.0)
+            await self.api.place_order(symbol=self.pair[1], side="sell", qty=qty_2, price=price_2, order_type="MARKET", confidence=0.0)
         else:
             # Sell 1, Buy 2
-            await self.api.place_order(product_id=self.pair[0], side="sell", size=qty_1, price=price_1, confidence=0.0)
-            await self.api.place_order(product_id=self.pair[1], side="buy", size=qty_2, price=price_2, confidence=0.0)
+            await self.api.place_order(symbol=self.pair[0], side="sell", qty=qty_1, price=price_1, order_type="MARKET", confidence=0.0)
+            await self.api.place_order(symbol=self.pair[1], side="buy", qty=qty_2, price=price_2, order_type="MARKET", confidence=0.0)
 
         self.db.log_trade(
             symbol=f"{self.pair[0]}+{self.pair[1]}",

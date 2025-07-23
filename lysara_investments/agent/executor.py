@@ -54,6 +54,11 @@ class TradeExecutor:
         qty = self.risk.get_position_size(price)
         side = "buy" if action == "BUY" else "sell"
         logging.info(f"Executing {side} {qty} {snapshot.ticker} @ {price}")
-        result = await self.api.place_order(snapshot.ticker, qty, side, confidence=decision.get("confidence"))
+        result = await self.api.place_order(
+            symbol=snapshot.ticker,
+            side=side,
+            qty=qty,
+            confidence=decision.get("confidence"),
+        )
         return result
 

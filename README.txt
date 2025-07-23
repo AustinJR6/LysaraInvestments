@@ -53,3 +53,18 @@ in the dashboard and launcher are hidden.
 The new `OpportunityScanner` leverages CoinGecko trending data and sentiment
 signals to surface promising assets. Temporary symbols will be added for one
 hour when discovered.
+
+## Testing Notes
+
+When running the bot in simulation mode after these Binance upgrades,
+verify the following:
+
+1. **Market Data** – prices from Binance WebSocket should stream without
+   errors and update your logs.
+2. **Account Info** – `fetch_account_info` and `fetch_holdings` must return
+   reasonable balances from Binance or mock values in simulation.
+3. **Order Execution** – simulated orders should log correctly and update the
+   `SimulatedPortfolio`; when live trading is enabled, ensure orders are
+   accepted by Binance.
+4. **Strategy Inputs** – confirm strategies reference sentiment scores from
+   CryptoPanic, NewsAPI and Reddit when generating trade decisions.
