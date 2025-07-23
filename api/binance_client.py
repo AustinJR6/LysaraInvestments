@@ -50,16 +50,28 @@ class BinanceClient(BaseAPI):
     async def _signed_request(self, method: str, path: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """Send an authenticated request handling common Binance errors."""
 
+        # Log the raw parameters and base URL for visibility before any mutation.
+        logging.debug(
+            "Preparing Binance signed request %s %s with params: %s",
+            method,
+            f"{self.base_url}{path}",
+            params,
+        )
+
         # Binance requires the HMAC SHA256 signature to be generated from the
         # exact query string that is sent with the request. Parameters are first
         # URL encoded then hashed using the API secret key.
 
-        # Filter out ``None`` values and append the current timestamp
+        # Filter out ``None`` values and append the current timestamp. Binance
+        # will reject requests if the timestamp is too far from their server
+        # time, so ensure the system clock is reasonably synchronized.
         clean_params = {k: v for k, v in params.items() if v is not None}
         clean_params["timestamp"] = int(time.time() * 1000)
+        logging.debug("Clean params: %s", clean_params)
 
         # Construct the query string in a deterministic order before signing
         query = urlencode(sorted(clean_params.items()), doseq=True)
+        logging.debug("Query string for signature: %s", query)
 
         # HMAC-SHA256 signature of the query string using the API secret
         signature = hmac.new(
@@ -67,9 +79,11 @@ class BinanceClient(BaseAPI):
             query.encode("utf-8"),
             hashlib.sha256,
         ).hexdigest()
+        logging.debug("Generated signature: %s", signature)
 
         # Final signed URL used for the request
         url = f"{self.base_url}{path}?{query}&signature={signature}"
+        logging.debug("Final signed URL: %s", url)
 
         backoff = 1
         for attempt in range(1, 6):
