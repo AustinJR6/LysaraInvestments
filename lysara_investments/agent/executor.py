@@ -5,8 +5,9 @@ from __future__ import annotations
 import logging
 from typing import Dict, Any
 
-from api.crypto_api import CryptoAPI
 from risk.risk_manager import RiskManager
+from services.trade_executor import TradeExecutorService
+from api.crypto_api import CryptoAPI
 from .market_snapshot import MarketSnapshot
 from .safety import is_safe_to_trade
 
@@ -19,14 +20,9 @@ class TradeExecutor:
         self.approval_required = config.get("approval_required", True)
         self.pending_decision: Dict[str, Any] | None = None
 
-        api_keys = config.get("api_keys", {})
-        self.api = CryptoAPI(
-            api_key=api_keys.get("binance", ""),
-            secret_key=api_keys.get("binance_secret", ""),
-            simulation_mode=config.get("simulation_mode", True),
-            config=config,
-        )
-        self.risk = RiskManager(self.api, config.get("crypto_settings", {}))
+        self.service = TradeExecutorService(config)
+        self.api_client = getattr(self.service, "crypto_api", None)
+        self.risk = RiskManager(self.api_client or CryptoAPI(), config.get("crypto_settings", {}))
 
     async def execute(self, snapshot: MarketSnapshot, decision: Dict[str, Any]):
         """Execute the trade if allowed."""
@@ -50,15 +46,20 @@ class TradeExecutor:
             logging.warning("Trade blocked by safety rules")
             return None
 
-        price = snapshot.price
-        qty = self.risk.get_position_size(price)
-        side = "buy" if action == "BUY" else "sell"
-        logging.info(f"Executing {side} {qty} {snapshot.ticker} @ {price}")
-        result = await self.api.place_order(
-            symbol=snapshot.ticker,
-            side=side,
-            qty=qty,
-            confidence=decision.get("confidence"),
+        signal = decision.get("order") or {
+            "market": "crypto",
+            "symbol": snapshot.ticker,
+            "side": action.lower(),
+            "qty": self.risk.get_position_size(snapshot.price),
+            "price": snapshot.price,
+            "confidence": decision.get("confidence"),
+        }
+        logging.info(
+            f"Executing {signal['side']} {signal['qty']} {signal['symbol']} @ {signal['price']}"
         )
-        return result
+        if not self.config.get("ENABLE_AI_TRADE_EXECUTION", False):
+            logging.info("AI trade execution disabled. Signal logged only.")
+            return None
+        await self.service.execute_order(signal)
+        return signal
 

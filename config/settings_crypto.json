@@ -21,5 +21,15 @@
   "max_drawdown": 0.2,
   "max_daily_loss": -200,
   "atr_period": 14,
-  "volatility_multiplier": 3
+  "volatility_multiplier": 3,
+  "strategies": [
+    {
+      "type": "momentum",
+      "trade_symbols": ["BTC-USD", "ETH-USD"]
+    },
+    {
+      "type": "momentum",
+      "trade_symbols": ["SOL-USD", "ADA-USD"]
+    }
+  ]
 }

@@ -15,5 +15,15 @@
   "risk_per_trade": 0.01,
   "max_drawdown": 0.1,
   "max_daily_loss": -500,
-  "moving_average_period": 20
+  "moving_average_period": 20,
+  "strategies": [
+    {
+      "type": "stock_momentum",
+      "trade_symbols": ["AAPL", "MSFT"]
+    },
+    {
+      "type": "stock_momentum",
+      "trade_symbols": ["GOOG", "AMZN"]
+    }
+  ]
 }
