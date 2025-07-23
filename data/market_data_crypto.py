@@ -6,6 +6,8 @@ import json
 import logging
 from datetime import datetime
 
+from .price_cache import update_price
+
 # This module is configured to use Binance.US endpoints
 
 # Default subscription message if no symbols provided.
@@ -33,6 +35,9 @@ async def start_crypto_market_feed(symbols: list[str], on_message=handle_market_
         "id": 1,
     }
 
+    # Map Binance symbol strings back to canonical symbols (e.g. BTCUSD -> BTC-USD)
+    symbol_map = {s.replace("-", "").upper(): s.upper() for s in symbols}
+
     while True:
         try:
             async with websockets.connect(uri) as ws:
@@ -42,9 +47,13 @@ async def start_crypto_market_feed(symbols: list[str], on_message=handle_market_
                     msg = json.loads(raw_msg)
                     data = msg.get("data", {})
                     if data.get("e") == "24hrTicker":
+                        symbol_raw = data.get("s")
+                        price = data.get("c")
+                        canonical = symbol_map.get(symbol_raw, symbol_raw)
+                        update_price(canonical, float(price), "binance")
                         await on_message({
-                            "symbol": data.get("s"),
-                            "price": data.get("c"),
+                            "symbol": canonical,
+                            "price": price,
                             "timestamp": datetime.utcnow().isoformat(),
                         })
         except Exception as e:

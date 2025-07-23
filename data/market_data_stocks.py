@@ -4,6 +4,8 @@ import asyncio
 import logging
 from datetime import datetime
 
+from .price_cache import update_price
+
 from services.alpaca_manager import AlpacaManager
 
 
@@ -14,6 +16,7 @@ async def fetch_stock_prices(alpaca: AlpacaManager, symbols: list[str]):
         try:
             logging.debug(f"Requesting price for {symbol} from Alpaca")
             price = (await alpaca.fetch_market_price(symbol)).get("price", 0)
+            update_price(symbol, price, "alpaca")
             results.append({
                 "symbol": symbol,
                 "price": price,
