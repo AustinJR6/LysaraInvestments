@@ -1,5 +1,5 @@
 # api/binance_client.py
-"""Async Binance client for core trading operations."""
+"""Async Binance client for core trading operations using Binance.US."""
 
 from __future__ import annotations
 
@@ -24,7 +24,8 @@ class BinanceClient(BaseAPI):
         self,
         api_key: str,
         api_secret: str,
-        base_url: str = "https://api.binance.com",
+        # Use Binance.US for all REST API calls
+        base_url: str = "https://api.binance.us",
         simulation_mode: bool = True,
         portfolio=None,
         config: Optional[Dict] = None,
