@@ -128,10 +128,10 @@ class MomentumStrategy(BaseStrategy):
             return
 
         await self.api.place_order(
-            product_id=symbol,
+            symbol=symbol,
             side=action,
-            size=qty,
-            order_type="market",
+            qty=qty,
+            order_type="MARKET",
             price=price,
             confidence=confidence,
         )

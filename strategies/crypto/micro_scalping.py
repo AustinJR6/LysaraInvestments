@@ -41,10 +41,10 @@ class MicroScalpingStrategy(BaseStrategy):
             logging.warning("MicroScalping: invalid position size")
             return
         await self.api.place_order(
-            product_id=symbol,
+            symbol=symbol,
             side=side,
-            size=qty,
-            order_type="market",
+            qty=qty,
+            order_type="MARKET",
             price=price,
             confidence=0.0,
         )
