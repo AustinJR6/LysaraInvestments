@@ -251,6 +251,9 @@ def main():
 
     if sentiment:
         st.sidebar.markdown("### 🗣 Sentiment Scores")
+        st.sidebar.write(
+            "Sources: " + ", ".join(sorted(sentiment.keys()))
+        )
         st.sidebar.json(sentiment)
 
 

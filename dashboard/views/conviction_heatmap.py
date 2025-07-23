@@ -9,6 +9,7 @@ def show_conviction_heatmap(sentiment: dict):
     if not cp:
         st.info("No sentiment data available.")
         return
+    st.caption("Source: CryptoPanic sentiment")
     data = {
         "asset": list(cp.keys()),
         "score": [v.get("score", 0.0) for v in cp.values()],
