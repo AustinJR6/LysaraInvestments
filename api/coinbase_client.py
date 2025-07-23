@@ -1,4 +1,9 @@
-"""Async Coinbase client using Coinbase AgentKit BrokerAPI."""
+"""Async Coinbase client using Coinbase AgentKit BrokerAPI.
+
+Deprecated: Trading operations have moved to :class:`BinanceClient`. This
+module is retained only for historical reference or potential sentiment
+experiments via Coinbase APIs.
+"""
 
 from __future__ import annotations
 

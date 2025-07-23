@@ -1,9 +1,9 @@
-"""Backward compatible CryptoAPI using Coinbase Advanced Trade SDK."""
+"""CryptoAPI now powered by BinanceClient for trading."""
 
-from api.coinbase_client import CoinbaseClient
+from api.binance_client import BinanceClient
 
 
-class CryptoAPI(CoinbaseClient):
+class CryptoAPI(BinanceClient):
     """Alias class for historical compatibility."""
 
     def __init__(

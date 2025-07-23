@@ -22,10 +22,10 @@ async def gather_market_snapshot(config: Dict, symbol: str) -> MarketSnapshot:
     price: float = 0.0
 
     # ---- Price Data -----------------------------------------------------
-    if api_keys.get("coinbase"):
+    if api_keys.get("binance"):
         api = CryptoAPI(
-            api_key=api_keys.get("coinbase"),
-            secret_key=api_keys.get("coinbase_secret", ""),
+            api_key=api_keys.get("binance"),
+            secret_key=api_keys.get("binance_secret", ""),
             simulation_mode=True,
             config=config,
         )
@@ -35,7 +35,7 @@ async def gather_market_snapshot(config: Dict, symbol: str) -> MarketSnapshot:
         except Exception as e:  # pragma: no cover - network errors
             logging.error(f"Price fetch failed for {symbol}: {e}")
     else:
-        logging.debug("Perception: coinbase key missing, skipping price fetch")
+        logging.debug("Perception: binance key missing, skipping price fetch")
 
     # ---- Sentiment Data -------------------------------------------------
     cp_key = api_keys.get("cryptopanic")

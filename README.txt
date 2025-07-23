@@ -25,8 +25,10 @@ Create a `.env` file based on `.env.example` and populate your API keys. At a mi
 set `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` to enable live or paper stock trading
 through Alpaca.
 
-For Coinbase Advanced Trade, set `COINBASE_SECRET_KEY` to your API secret
-directly. The application no longer supports loading `.pem` files.
+For cryptocurrency trading we now integrate with **Binance**. Set
+`BINANCE_API_KEY` and `BINANCE_SECRET_KEY` in your `.env`.
+Legacy Coinbase keys are still supported for compatibility but are no longer
+required.
 
 For Alpaca, `ALPACA_BASE_URL` should be the root URL such as
 `https://paper-api.alpaca.markets` (without `/v2`). Including `/v2` will produce

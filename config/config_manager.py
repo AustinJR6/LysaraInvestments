@@ -22,6 +22,8 @@ class ConfigManager:
         self.base_config['api_keys'] = {
             'coinbase': os.getenv('COINBASE_API_KEY'),
             'coinbase_secret': os.getenv('COINBASE_SECRET_KEY'),
+            'binance': os.getenv('BINANCE_API_KEY'),
+            'binance_secret': os.getenv('BINANCE_SECRET_KEY'),
             'alpaca': os.getenv('ALPACA_API_KEY'),
             'alpaca_secret': os.getenv('ALPACA_SECRET_KEY'),
             'alpaca_base_url': os.getenv('ALPACA_BASE_URL', 'https://paper-api.alpaca.markets'),

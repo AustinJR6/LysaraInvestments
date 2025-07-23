@@ -21,8 +21,8 @@ class TradeExecutor:
 
         api_keys = config.get("api_keys", {})
         self.api = CryptoAPI(
-            api_key=api_keys.get("coinbase", ""),
-            secret_key=api_keys.get("coinbase_secret", ""),
+            api_key=api_keys.get("binance", ""),
+            secret_key=api_keys.get("binance_secret", ""),
             simulation_mode=config.get("simulation_mode", True),
             config=config,
         )

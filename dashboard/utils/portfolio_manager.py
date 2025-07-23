@@ -24,12 +24,12 @@ class PortfolioManager:
         holdings: List[Dict] = []
         api_keys = self.config.get("api_keys", {})
 
-        # Crypto holdings via Coinbase
-        if api_keys.get("coinbase"):
+        # Crypto holdings via Binance
+        if api_keys.get("binance"):
             try:
                 api = CryptoAPI(
-                    api_key=api_keys.get("coinbase"),
-                    secret_key=api_keys.get("coinbase_secret", ""),
+                    api_key=api_keys.get("binance"),
+                    secret_key=api_keys.get("binance_secret", ""),
                     simulation_mode=False,
                 )
                 data = await api.fetch_holdings()
@@ -98,15 +98,15 @@ class PortfolioManager:
         return holdings
 
     async def _fetch_crypto_holdings(self) -> List[Dict]:
-        """Fetch crypto holdings via Coinbase."""
+        """Fetch crypto holdings via Binance."""
         holdings: List[Dict] = []
         api_keys = self.config.get("api_keys", {})
-        if not api_keys.get("coinbase"):
+        if not api_keys.get("binance"):
             return holdings
         try:
             api = CryptoAPI(
-                api_key=api_keys.get("coinbase"),
-                secret_key=api_keys.get("coinbase_secret", ""),
+                api_key=api_keys.get("binance"),
+                secret_key=api_keys.get("binance_secret", ""),
                 simulation_mode=False,
             )
             data = await api.fetch_holdings()
