@@ -6,6 +6,8 @@ import json
 import logging
 from datetime import datetime
 
+# This module is configured to use Binance.US endpoints
+
 # Default subscription message if no symbols provided.
 SUBSCRIBE_MESSAGE = {
     "method": "SUBSCRIBE",
@@ -22,7 +24,8 @@ async def start_crypto_market_feed(symbols: list[str], on_message=handle_market_
     """Launch a Binance WebSocket connection for real-time ticker data."""
     # Coinbase WebSocket does not provide unique sentiment streams, so we use
     # Binance for market data and trading. Coinbase support has been removed.
-    uri = "wss://stream.binance.com:9443/stream"
+    # Connect to Binance.US WebSocket endpoint
+    uri = "wss://stream.binance.us:9443/stream"
     stream = "/".join([f"{s.lower().replace('-', '')}@ticker" for s in symbols])
     subscribe_msg = {
         "method": "SUBSCRIBE",
