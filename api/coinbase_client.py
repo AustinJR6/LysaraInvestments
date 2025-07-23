@@ -1,8 +1,8 @@
-"""Async Coinbase client using Coinbase AgentKit BrokerAPI.
+"""Deprecated Coinbase trading client.
 
-Deprecated: Trading operations have moved to :class:`BinanceClient`. This
-module is retained only for historical reference or potential sentiment
-experiments via Coinbase APIs.
+This module previously handled trading via Coinbase. Binance is now the
+primary exchange and this client remains only for archival purposes and
+non-trading utilities. It should not be imported by active modules.
 """
 
 from __future__ import annotations

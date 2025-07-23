@@ -47,23 +47,68 @@ class BinanceClient(BaseAPI):
     # Helpers
     # ------------------------------------------------------------------
     async def _signed_request(self, method: str, path: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Send an authenticated request handling common Binance errors."""
+
         params["timestamp"] = int(time.time() * 1000)
         query = urlencode(params, True)
         signature = hmac.new(self.api_secret.encode(), query.encode(), hashlib.sha256).hexdigest()
-        query += f"&signature={signature}"
-        url = f"{self.base_url}{path}?{query}"
-        for attempt in range(1, 4):
+        url = f"{self.base_url}{path}?{query}&signature={signature}"
+
+        backoff = 1
+        for attempt in range(1, 6):
             try:
                 if method == "GET":
                     resp = await self.session.get(url)
+                elif method == "DELETE":
+                    resp = await self.session.delete(url)
                 else:
                     resp = await self.session.post(url)
+
+                data = await resp.json()
+
+                if resp.status == 429 or data.get("code") in {-1003, -1015}:
+                    logging.warning(
+                        f"Binance rate limit hit (attempt {attempt}); retrying in {backoff}s"
+                    )
+                    await asyncio.sleep(backoff)
+                    backoff = min(backoff * 2, 32)
+                    continue
+
+                if resp.status >= 500:
+                    logging.warning(
+                        f"Binance server error {resp.status} (attempt {attempt}); retrying in {backoff}s"
+                    )
+                    await asyncio.sleep(backoff)
+                    backoff = min(backoff * 2, 32)
+                    continue
+
                 resp.raise_for_status()
-                return await resp.json()
-            except Exception as e:
-                logging.error(f"Binance {method} {path} failed (attempt {attempt}): {e}")
-                await asyncio.sleep(attempt)
-        return {}
+
+                if data.get("code") and data.get("code") != 0:
+                    code = int(data["code"])
+                    msg = data.get("msg", "")
+                    if code == -2010:
+                        logging.error("Binance error: insufficient funds")
+                    elif code == -1121:
+                        logging.error("Binance error: invalid symbol")
+                    else:
+                        logging.error(f"Binance error {code}: {msg}")
+                    return {"error": code, "message": msg}
+
+                return data
+
+            except aiohttp.ClientError as e:
+                logging.warning(
+                    f"Binance network error on {method} {path} (attempt {attempt}): {e}."
+                )
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 2, 32)
+            except Exception as e:  # pragma: no cover - unexpected
+                logging.exception(f"Unexpected Binance error: {e}")
+                return {"error": "exception", "message": str(e)}
+
+        logging.error(f"Binance {method} {path} failed after {attempt} attempts")
+        return {"error": "max_retries"}
 
     # ------------------------------------------------------------------
     # Account and holdings
@@ -73,6 +118,16 @@ class BinanceClient(BaseAPI):
             logging.debug("BinanceClient: simulation mode – returning mock account info")
             return {"balance": self._mock_equity}
         data = await self._signed_request("GET", "/api/v3/account", {})
+        balances = {
+            b.get("asset"): float(b.get("free", 0))
+            for b in data.get("balances", [])
+            if float(b.get("free", 0)) > 0
+        }
+        data["parsed_balances"] = balances
+        for stable in ("USDT", "USD", "BUSD", "USDC"):
+            if stable in balances:
+                data["balance"] = balances[stable]
+                break
         return data
 
     async def get_holdings(self) -> Dict[str, float]:
@@ -138,6 +193,8 @@ class BinanceClient(BaseAPI):
             "quantity": qty,
         }
         result = await self._signed_request("POST", "/api/v3/order", params)
+        if result.get("error"):
+            return result
         price = (await self.fetch_market_price(symbol)).get("price", 0.0)
         await log_live_trade(
             symbol,
@@ -155,7 +212,8 @@ class BinanceClient(BaseAPI):
             logging.info(f"BinanceClient SIM cancel {order_id}")
             return {"orderId": order_id, "status": "CANCELED"}
         params = {"symbol": symbol.replace("-", ""), "orderId": order_id}
-        return await self._signed_request("DELETE", "/api/v3/order", params)
+        result = await self._signed_request("DELETE", "/api/v3/order", params)
+        return result
 
     async def close(self) -> None:
         await super().close()
