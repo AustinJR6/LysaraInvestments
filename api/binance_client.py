@@ -18,12 +18,20 @@ from utils.guardrails import log_live_trade
 
 
 class BinanceClient(BaseAPI):
-    """Simplified async client for the Binance REST API."""
+    """Simplified async client for the Binance REST API.
+
+    This client supports a two-key strategy. A read-only API key pair is used
+    for endpoints that merely fetch account information, while a separate
+    trading key pair is used for any order related requests.  This reduces risk
+    by limiting the capabilities of the read-only credentials.
+    """
 
     def __init__(
         self,
-        api_key: str,
-        api_secret: str,
+        read_api_key: str = "",
+        read_api_secret: str = "",
+        trade_api_key: str = "",
+        trade_api_secret: str = "",
         # Use Binance.US for all REST API calls
         base_url: str = "https://api.binance.us",
         simulation_mode: bool = True,
@@ -32,8 +40,11 @@ class BinanceClient(BaseAPI):
         trade_cooldown: int = 30,
     ) -> None:
         super().__init__(base_url)
-        self.api_key = api_key
-        self.api_secret = api_secret
+        # Store separate credential sets
+        self._read_api_key = read_api_key
+        self._read_api_secret = read_api_secret
+        self._trade_api_key = trade_api_key
+        self._trade_api_secret = trade_api_secret
         self.simulation_mode = simulation_mode
         self.portfolio = portfolio
         self.config = config or {}
@@ -41,14 +52,24 @@ class BinanceClient(BaseAPI):
         self._last_trade: Dict[str, float] = {}
         self._mock_equity = 10000.0
         self._mock_holdings: Dict[str, float] = {}
-        if not simulation_mode:
-            self.session.headers.update({"X-MBX-APIKEY": api_key})
 
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
-    async def _signed_request(self, method: str, path: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Send an authenticated request handling common Binance errors."""
+    async def _signed_request(
+        self,
+        method: str,
+        path: str,
+        params: Dict[str, Any],
+        api_key: str,
+        api_secret: str,
+    ) -> Dict[str, Any]:
+        """Send an authenticated request using the provided key pair.
+
+        This internal helper signs the request with ``api_secret`` and attaches
+        the corresponding ``api_key`` as a header.  Common Binance errors are
+        handled with retries and parsed into a standard dict.
+        """
 
         # Log the raw parameters and base URL for visibility before any mutation.
         logging.debug(
@@ -73,9 +94,9 @@ class BinanceClient(BaseAPI):
         query = urlencode(sorted(clean_params.items()), doseq=True)
         logging.debug("Query string for signature: %s", query)
 
-        # HMAC-SHA256 signature of the query string using the API secret
+        # HMAC-SHA256 signature of the query string using the provided secret
         signature = hmac.new(
-            self.api_secret.encode("utf-8"),
+            api_secret.encode("utf-8"),
             query.encode("utf-8"),
             hashlib.sha256,
         ).hexdigest()
@@ -88,12 +109,13 @@ class BinanceClient(BaseAPI):
         backoff = 1
         for attempt in range(1, 6):
             try:
+                headers = {"X-MBX-APIKEY": api_key}
                 if method == "GET":
-                    resp = await self.session.get(url)
+                    resp = await self.session.get(url, headers=headers)
                 elif method == "DELETE":
-                    resp = await self.session.delete(url)
+                    resp = await self.session.delete(url, headers=headers)
                 else:
-                    resp = await self.session.post(url)
+                    resp = await self.session.post(url, headers=headers)
 
                 data = await resp.json()
 
@@ -145,6 +167,22 @@ class BinanceClient(BaseAPI):
         logging.error(f"Binance {method} {path} failed after {attempt} attempts")
         return {"error": "max_retries"}
 
+    async def _signed_read_request(
+        self, method: str, path: str, params: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Send a request using the read-only key pair."""
+        return await self._signed_request(
+            method, path, params, self._read_api_key, self._read_api_secret
+        )
+
+    async def _signed_trade_request(
+        self, method: str, path: str, params: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Send a request using the trading key pair."""
+        return await self._signed_request(
+            method, path, params, self._trade_api_key, self._trade_api_secret
+        )
+
     # ------------------------------------------------------------------
     # Account and holdings
     # ------------------------------------------------------------------
@@ -152,7 +190,8 @@ class BinanceClient(BaseAPI):
         if self.simulation_mode:
             logging.debug("BinanceClient: simulation mode – returning mock account info")
             return {"balance": self._mock_equity}
-        data = await self._signed_request("GET", "/api/v3/account", {})
+        # Account information only requires read permissions
+        data = await self._signed_read_request("GET", "/api/v3/account", {})
         balances = {
             b.get("asset"): float(b.get("free", 0))
             for b in data.get("balances", [])
@@ -169,7 +208,8 @@ class BinanceClient(BaseAPI):
         if self.simulation_mode:
             logging.debug("BinanceClient: simulation mode – returning mock holdings")
             return self._mock_holdings
-        data = await self._signed_request("GET", "/api/v3/account", {})
+        # Holdings lookup uses the read-only credentials
+        data = await self._signed_read_request("GET", "/api/v3/account", {})
         holdings: Dict[str, float] = {}
         for bal in data.get("balances", []):
             asset = bal.get("asset")
@@ -227,7 +267,8 @@ class BinanceClient(BaseAPI):
             "type": order_type.upper(),
             "quantity": qty,
         }
-        result = await self._signed_request("POST", "/api/v3/order", params)
+        # Placing an order requires trading permissions
+        result = await self._signed_trade_request("POST", "/api/v3/order", params)
         if result.get("error"):
             return result
         price = (await self.fetch_market_price(symbol)).get("price", 0.0)
@@ -247,7 +288,8 @@ class BinanceClient(BaseAPI):
             logging.info(f"BinanceClient SIM cancel {order_id}")
             return {"orderId": order_id, "status": "CANCELED"}
         params = {"symbol": symbol.replace("-", ""), "orderId": order_id}
-        result = await self._signed_request("DELETE", "/api/v3/order", params)
+        # Canceling orders also requires trading credentials
+        result = await self._signed_trade_request("DELETE", "/api/v3/order", params)
         return result
 
     async def close(self) -> None:
