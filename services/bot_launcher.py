@@ -20,8 +20,19 @@ from services.heartbeat import heartbeat
 class BotLauncher:
     def __init__(self, config: dict):
         self.config = config
+        env_syms = os.getenv("TRADE_SYMBOLS", "")
+        if env_syms:
+            syms = [s.strip().upper() for s in env_syms.split(";") if s.strip()] if ";" in env_syms else [s.strip().upper() for s in env_syms.split(",") if s.strip()]
+            crypto = [s for s in syms if "-" in s]
+            stocks = [s for s in syms if "-" not in s]
+            if crypto:
+                self.config["TRADE_SYMBOLS"] = crypto
+            if stocks:
+                self.config.setdefault("stocks_settings", {}).setdefault(
+                    "trade_symbols", stocks
+                )
         self.db = DatabaseManager(config.get("db_path", "trades.db"))
-        self.bg_tasks = BackgroundTasks(config)
+        self.bg_tasks = BackgroundTasks(self.config)
         self.sim_portfolio = None
         if self.config.get("simulation_mode", True):
             starting = self.config.get("starting_balance", 1000.0)
@@ -54,9 +65,9 @@ class BotLauncher:
 
         api_keys = self.config["api_keys"]
         settings = self.config.get("crypto_settings", {})
-        base_symbols_env = os.getenv("TRADE_SYMBOLS")
+        base_symbols_env = self.config.get("TRADE_SYMBOLS")
         symbols = (
-            base_symbols_env.split(",")
+            base_symbols_env
             if base_symbols_env
             else settings.get("trade_symbols", ["BTC-USD", "ETH-USD"])
         )

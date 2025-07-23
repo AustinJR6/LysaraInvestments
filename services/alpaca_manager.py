@@ -53,6 +53,7 @@ class AlpacaManager:
         return await get_positions()
 
     async def fetch_market_price(self, symbol: str) -> dict:
+        logging.debug(f"Fetching market price for {symbol} via Alpaca API")
         return await fetch_market_price(symbol)
 
     async def place_order(

@@ -12,6 +12,7 @@ async def fetch_stock_prices(alpaca: AlpacaManager, symbols: list[str]):
     results = []
     for symbol in symbols:
         try:
+            logging.debug(f"Requesting price for {symbol} from Alpaca")
             price = (await alpaca.fetch_market_price(symbol)).get("price", 0)
             results.append({
                 "symbol": symbol,
@@ -25,6 +26,9 @@ async def fetch_stock_prices(alpaca: AlpacaManager, symbols: list[str]):
 
 async def start_stock_polling_loop(symbols, alpaca: AlpacaManager, interval=10, on_price=None):
     """Poll stock prices every `interval` seconds via Alpaca."""
+    logging.info(
+        f"Starting Alpaca polling loop for: {', '.join(symbols)} every {interval}s"
+    )
     while True:
         prices = await fetch_stock_prices(alpaca, symbols)
         for p in prices:

@@ -30,6 +30,9 @@ async def start_stock_ws_feed(
             logging.info(f"[ALPACA WS] {data['symbol']} @ {data['price']}")
 
     url = f"wss://stream.data.alpaca.markets/v2/{data_feed}"
+    logging.info(
+        f"Connecting to Alpaca WS feed {url} for symbols: {', '.join(symbols)}"
+    )
 
     while True:
         try:
@@ -40,6 +43,7 @@ async def start_stock_ws_feed(
                 await ws.send(json.dumps(subs))
 
                 async for msg in ws:
+                    logging.debug(f"Alpaca WS raw: {msg}")
                     data = json.loads(msg)
                     for bar in data.get("bars", []):
                         parsed = {
