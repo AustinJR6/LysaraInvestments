@@ -113,7 +113,11 @@ class BinanceClient(BaseAPI):
                     backoff = min(backoff * 2, 32)
                     continue
 
-                resp.raise_for_status()
+                if resp.status >= 400:
+                    code = data.get("code", resp.status)
+                    msg = data.get("msg", str(data))
+                    logging.error(f"Binance HTTP {resp.status}: {code} {msg}")
+                    return {"error": code, "message": msg}
 
                 if data.get("code") and data.get("code") != 0:
                     code = int(data["code"])
