@@ -73,8 +73,8 @@ class BotLauncher:
         symbols = list(set(symbols + extra_symbols))
 
         crypto_api = CryptoAPI(
-            api_key=api_keys["coinbase"],
-            secret_key=api_keys["coinbase_secret"],
+            api_key=api_keys.get("binance"),
+            secret_key=api_keys.get("binance_secret", ""),
             simulation_mode=self.config.get("simulation_mode", True),
             portfolio=self.sim_portfolio,
             config=self.config,
