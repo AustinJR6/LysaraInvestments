@@ -12,10 +12,6 @@ def get_sentiment_score(symbol: str) -> float:
         data = json.loads(SENTIMENT_PATH.read_text())
         scores = []
 
-        cp_score = data.get("cryptopanic", {}).get(symbol, {}).get("score")
-        if cp_score is not None:
-            scores.append(float(cp_score))
-
         reddit_data = data.get("reddit", {})
         if isinstance(reddit_data, dict):
             for entry in reddit_data.values():

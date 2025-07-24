@@ -11,7 +11,6 @@ from indicators.technical_indicators import (
 
 from data.sentiment import (
     fetch_newsapi_sentiment,
-    fetch_cryptopanic_sentiment,
     fetch_reddit_sentiment,
 )
 
@@ -35,7 +34,6 @@ class SignalFusionEngine:
         self.market_weight = float(config.get("MARKET_WEIGHT", 0.2))
         self.reddit_subs = config.get("REDDIT_SUBS", ["CryptoCurrency"])
         self.news_key = config.get("NEWSAPI_KEY")
-        self.cp_key = config.get("CRYPTOPANIC_KEY")
         self.loop = asyncio.get_event_loop()
 
     async def sentiment_score(self, symbol: str) -> float:
@@ -43,8 +41,6 @@ class SignalFusionEngine:
         tasks = []
         if self.news_key:
             tasks.append(fetch_newsapi_sentiment(self.news_key, symbol))
-        if self.cp_key:
-            tasks.append(fetch_cryptopanic_sentiment(self.cp_key, [symbol]))
         for sub in self.reddit_subs:
             tasks.append(fetch_reddit_sentiment(sub))
         results = await asyncio.gather(*tasks, return_exceptions=True)

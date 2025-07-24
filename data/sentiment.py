@@ -19,42 +19,42 @@ def analyze_sentiment(text: str) -> float:
 
 # === CryptoPanic ===
 
-async def fetch_cryptopanic_sentiment(api_key: str, symbols: list[str]) -> dict:
-    """
-    Pulls latest sentiment data for crypto from CryptoPanic API.
-    """
-    url = "https://cryptopanic.com/api/v1/posts/"
-    headers = {"Accept": "application/json"}
-    result = {}
+# The CryptoPanic API integration has been removed.
+# The original function has been commented out to disable requests.
 
-    async with aiohttp.ClientSession() as session:
-        for symbol in symbols:
-            params = {
-                "auth_token": api_key,
-                "currencies": symbol.split("-")[0].lower(),
-                "filter": "rising",
-                "public": "true"
-            }
-            try:
-                async with session.get(url, params=params, headers=headers) as response:
-                    data = await response.json()
-                    posts = data.get("results", [])
-                    scores = [
-                        analyze_sentiment(
-                            (p.get("title") or "") + " " + (p.get("body") or "")
-                        )
-                        for p in posts
-                    ]
-                    avg_score = round(sum(scores) / len(scores), 3) if scores else 0.0
-                    result[symbol] = {
-                        "score": avg_score,
-                        "count": len(scores),
-                        "timestamp": datetime.utcnow().isoformat()
-                    }
-            except Exception as e:
-                logging.error(f"CryptoPanic error for {symbol}: {e}")
-                result[symbol] = {"score": 0.0, "count": 0}
-    return result
+# async def fetch_cryptopanic_sentiment(api_key: str, symbols: list[str]) -> dict:
+#     """Pulls latest sentiment data for crypto from CryptoPanic API."""
+#     url = "https://cryptopanic.com/api/v1/posts/"
+#     headers = {"Accept": "application/json"}
+#     result = {}
+#     async with aiohttp.ClientSession() as session:
+#         for symbol in symbols:
+#             params = {
+#                 "auth_token": api_key,
+#                 "currencies": symbol.split("-")[0].lower(),
+#                 "filter": "rising",
+#                 "public": "true"
+#             }
+#             try:
+#                 async with session.get(url, params=params, headers=headers) as response:
+#                     data = await response.json()
+#                     posts = data.get("results", [])
+#                     scores = [
+#                         analyze_sentiment(
+#                             (p.get("title") or "") + " " + (p.get("body") or "")
+#                         )
+#                         for p in posts
+#                     ]
+#                     avg_score = round(sum(scores) / len(scores), 3) if scores else 0.0
+#                     result[symbol] = {
+#                         "score": avg_score,
+#                         "count": len(scores),
+#                         "timestamp": datetime.utcnow().isoformat()
+#                     }
+#             except Exception as e:
+#                 logging.error(f"CryptoPanic error for {symbol}: {e}")
+#                 result[symbol] = {"score": 0.0, "count": 0}
+#     return result
 
 # === NewsAPI ===
 
