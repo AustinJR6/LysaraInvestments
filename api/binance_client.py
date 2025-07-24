@@ -15,6 +15,7 @@ import aiohttp
 
 from api.base_api import BaseAPI
 from utils.guardrails import log_live_trade
+from data.price_cache import get_price
 
 
 class BinanceClient(BaseAPI):
@@ -223,6 +224,10 @@ class BinanceClient(BaseAPI):
     # ------------------------------------------------------------------
     async def fetch_market_price(self, symbol: str) -> Dict[str, float]:
         if self.simulation_mode:
+            cached = get_price(symbol)
+            if cached:
+                price = float(cached.get("price", 0.0))
+                return {"price": price, "bid": price, "ask": price}
             return {"price": 0.0, "bid": 0.0, "ask": 0.0}
         sym = symbol.replace("-", "")
         for attempt in range(1, 4):
