@@ -58,7 +58,6 @@ class MomentumStrategy(BaseStrategy):
         if not self.sentiment_source:
             return 0.0
         scores = self.sentiment_source.sentiment_scores
-        cp = scores.get("cryptopanic", {}).get(symbol, {}).get("score", 0.0)
         reddit_data = scores.get("reddit", {})
         reddit_avg = 0.0
         if reddit_data:
@@ -66,7 +65,7 @@ class MomentumStrategy(BaseStrategy):
                 reddit_avg += sub.get("score", 0.0)
             reddit_avg /= max(len(reddit_data), 1)
         news = scores.get("newsapi", {}).get("score", 0.0)
-        return (cp + reddit_avg + news) / 3
+        return (reddit_avg + news) / 2
 
     def _build_context(self, symbol: str, price: float, sentiment: float) -> dict:
         prices = self.price_history[symbol]

@@ -37,23 +37,7 @@ async def start_coingecko_polling(symbols: list[str], interval: int = 60, on_dat
     Stock tickers are ignored. Prices already provided by Binance take
     precedence over CoinGecko data.
     """
-    coin_ids = []
-    for s in symbols:
-        if "-" not in s:
-            logging.debug(f"Skipping non-crypto symbol {s} for CoinGecko polling")
-            continue
-        coin_ids.append(s.split("-")[0].lower())
-    async with aiohttp.ClientSession() as session:
-        while True:
-            for cid in coin_ids:
-                canonical = f"{cid.upper()}-USD"
-                cached = get_price(canonical)
-                if cached and cached.get("source") in {"binance", "alpaca"}:
-                    continue  # prefer exchange price
-                data = await fetch_coingecko_price(session, cid)
-                if on_data:
-                    await on_data(data)
-                else:
-                    logging.info(f"[COINGECKO] {cid} @ {data['price']}")
-            await asyncio.sleep(interval)
+    logging.info("CoinGecko price polling disabled")
+    while True:
+        await asyncio.sleep(interval)
 

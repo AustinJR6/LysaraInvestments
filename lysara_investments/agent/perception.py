@@ -8,7 +8,6 @@ from datetime import datetime
 
 from api.crypto_api import CryptoAPI
 from data.sentiment import (
-    fetch_cryptopanic_sentiment,
     fetch_reddit_sentiment,
 )
 from .market_snapshot import MarketSnapshot
@@ -38,12 +37,6 @@ async def gather_market_snapshot(config: Dict, symbol: str) -> MarketSnapshot:
         logging.debug("Perception: binance key missing, skipping price fetch")
 
     # ---- Sentiment Data -------------------------------------------------
-    cp_key = api_keys.get("cryptopanic")
-    if cp_key:
-        try:
-            sentiment["cryptopanic"] = await fetch_cryptopanic_sentiment(cp_key, [symbol])
-        except Exception as e:  # pragma: no cover - network errors
-            logging.error(f"CryptoPanic fetch failed: {e}")
     subreddits = config.get("reddit_subreddits", ["Cryptocurrency"])
     reddit_scores: Dict[str, Any] = {}
     for sub in subreddits:
